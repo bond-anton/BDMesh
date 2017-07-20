@@ -1,7 +1,17 @@
-# Schottky
+# BDMesh
 
-This project is a collection of python modules and tools for simulation of 1D Schottky diode with some defects in the semiconductor bulk.
+Mesh generators and tools for operation on meshes and meshes trees.
 
-## Acknowledgement
+## Installation
 
-The initial part of the project was supported by Russian Foundation for Basic Research (grant 14-02-31511-mol_a).
+To install BDMesh run
+```shell
+python setup.py install
+```
+## Usage
+
+Please see the demo directory for the usage examples.
+
+## License
+
+BDMesh is free open source software licensed under Apache license version 2.0
