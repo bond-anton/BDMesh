@@ -2,13 +2,13 @@ from __future__ import division, print_function
 import math as m
 
 
-def check_if_integer(x, threshold, debug=False):
-    L = m.floor(x)
-    U = m.ceil(x)
-    C = L if abs(L - x) < abs(U - x) else U
+def check_if_integer(x, threshold=1e-10, debug=False):
+    lower = m.floor(x)
+    upper = m.ceil(x)
+    closest = lower if abs(lower - x) < abs(upper - x) else upper
     if debug:
-        print(x, L, U, C, C - x)
-    if abs(C - x) < threshold:
+        print(x, lower, upper, closest, closest - x)
+    if abs(closest - x) < threshold:
         return True
     else:
         return False

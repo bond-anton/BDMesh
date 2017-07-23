@@ -1,168 +1,33 @@
 from __future__ import division, print_function
 import math as m
-
 import numpy as np
+from numbers import Number
 
-from BDMesh._helpers import check_if_integer
+from BDMesh import TreeMesh1D, MeshUniform1D
+from ._helpers import check_if_integer
 
-
-class UniformMesh1D:
+class TreeMeshUniform1D(TreeMesh1D):
     """
-    One dimensional grid
-    """
-
-    def __init__(self, phys_boundary1, phys_boundary2, phys_step, bc1, bc2, crop=None):
-        if crop is None:
-            crop = [0, 0]
-        if phys_boundary1 < phys_boundary2:
-            self.phys_boundary1 = phys_boundary1
-            self.phys_boundary2 = phys_boundary2
-            self.bc1 = bc1
-            self.bc2 = bc2
-        else:
-            self.phys_boundary1 = phys_boundary2
-            self.phys_boundary2 = phys_boundary1
-            self.bc1 = bc2
-            self.bc2 = bc1
-        self.crop = np.array(crop)
-        self.phys_step = abs(phys_step)
-        self.num = int(np.ceil((self.phys_boundary2 - self.phys_boundary1) / self.phys_step) + 1)
-        if self.phys_boundary1 + (self.num - 1) * self.phys_step > self.phys_boundary2:
-            self.num -= 1
-        self.local_nodes, self.local_step = np.linspace(0.0, 1.0, num=self.num, endpoint=True, retstep=True)
-        self.J = self.phys_step / self.local_step
-        self.solution = np.zeros(self.num)
-        self.residual = np.zeros(self.num)
-        self.int_residual = 0
-
-    def trim(self, debug=False):
-        if debug:
-            print('Cropping', np.sum(self.crop), 'elements')
-            print('phys_boundary1', self.phys_boundary1)
-            print('phys_boundary2', self.phys_boundary2)
-        self.phys_boundary1 += self.crop[0] * self.phys_step
-        self.phys_boundary2 -= self.crop[1] * self.phys_step
-        if debug:
-            print('phys_boundary1', self.phys_boundary1)
-            print('phys_boundary2', self.phys_boundary2)
-        self.num = int(np.ceil(self.num - np.sum(self.crop)))
-        self.local_nodes, self.local_step = np.linspace(0.0, 1.0, num=self.num, endpoint=True, retstep=True)
-        self.J = self.phys_step / self.local_step
-        self.solution = self.solution[self.crop[0]:self.solution.size - self.crop[1]]
-        self.residual = self.residual[self.crop[0]:self.residual.size - self.crop[1]]
-        self.bc1 = self.solution[0]
-        self.bc2 = self.solution[-1]
-        self.crop = np.array([0, 0])
-
-    def to_phys(self, x):
-        return self.phys_boundary1 + self.J * x
-
-    def phys_nodes(self):
-        return self.to_phys(self.local_nodes)
-
-    def to_local(self, x):
-        return (x - self.phys_boundary1) / self.J
-
-    def local_f(self, f, args=None):
-        def f_l(x, arguments=args):
-            if arguments is not None:
-                return f(self.to_phys(x), arguments)
-            else:
-                return f(self.to_phys(x))
-
-        return f_l
-
-    def is_inside_of(self, mesh):
-        if mesh.phys_boundary1 <= self.phys_boundary1 and mesh.phys_boundary2 >= self.phys_boundary2:
-            return True
-        else:
-            return False
-
-    def inner_mesh_indexes(self, mesh):
-        if mesh.is_inside_of(self):
-            local_start = self.to_local(mesh.phys_boundary1)
-            local_stop = self.to_local(mesh.phys_boundary2)
-            idx1 = np.where(abs(self.local_nodes - local_start) < self.local_step / 2)[0][0]
-            idx2 = np.where(abs(self.local_nodes - local_stop) < self.local_step / 2)[0][0]
-            return [idx1, idx2]
-        else:
-            return [None, None]
-
-    def overlap_with(self, mesh):
-        if self.is_inside_of(mesh) or mesh.is_inside_of(self):
-            return True
-        elif mesh.phys_boundary1 <= self.phys_boundary1 <= mesh.phys_boundary2:
-            return True
-        elif mesh.phys_boundary2 >= self.phys_boundary2 >= mesh.phys_boundary1:
-            return True
-        else:
-            return False
-
-    # noinspection PyUnresolvedReferences
-    def is_aligned_with(self, mesh):
-        min_size = min(mesh.num, self.num)
-        min_step = min(mesh.phys_step, self.phys_step)
-        max_step = max(mesh.phys_step, self.phys_step)
-        step_ratio = max_step / min_step
-        # print step_ratio, m.rnd(step_ratio), abs(m.floor(step_ratio) - step_ratio)
-        # if abs(m.floor(step_ratio) - step_ratio) < 1e-6:#step_ratio.is_integer():
-        if check_if_integer(step_ratio, 1e-8):
-            shift = (mesh.to_phys(mesh.local_nodes)[:min_size] - self.to_phys(self.local_nodes)[:min_size]) / min_step
-            if shift[0].is_integer() or abs(round(shift[0]) - shift[0]) < 1e-6:
-                return True
-            else:
-                print('SHIFT!!! %3.16f' % shift[0])
-                return False
-        else:
-            print(abs(m.floor(step_ratio) - step_ratio))
-            return False
-
-    def merge_with(self, mesh):
-        if self.overlap_with(mesh) and abs(self.phys_step - mesh.phys_step) < 0.1 * self.phys_step:
-            if self.is_aligned_with(mesh):
-                self.bc1 = self.bc1 if self.phys_boundary1 <= mesh.phys_boundary1 else mesh.bc1
-                self.bc2 = self.bc2 if self.phys_boundary2 >= mesh.phys_boundary2 else mesh.bc2
-                self.crop[0] = self.crop[0] if self.phys_boundary1 <= mesh.phys_boundary1 else mesh.crop[0]
-                self.crop[1] = self.crop[1] if self.phys_boundary2 >= mesh.phys_boundary2 else mesh.crop[1]
-                phys_nodes = np.union1d(self.phys_nodes(), mesh.phys_nodes())
-                self.phys_boundary1 = phys_nodes[0]
-                self.phys_boundary2 = phys_nodes[-1]
-                self.num = int((self.phys_boundary2 - self.phys_boundary1) / self.phys_step + 1)
-                self.solution = np.zeros(self.num)
-                self.residual = np.zeros(self.num)
-                self.local_nodes, self.local_step = np.linspace(0.0, 1.0, num=self.num, endpoint=True, retstep=True)
-                self.J = self.phys_step / self.local_step
-            else:
-                print('meshes are not aligned and could not be merged')
-        else:
-            print(abs(self.phys_step - mesh.phys_step), self.phys_step)
-            print('meshes do not overlap or have different step size')
-
-
-class Uniform1DMeshesTree(object):
-    """
-    Manages the tree of meshes
+    Manages the tree of uniform meshes
     """
 
     def __init__(self, root_mesh, refinement_coefficient=2, aligned=True, crop=None):
+        assert isinstance(root_mesh, MeshUniform1D)
+        super(TreeMeshUniform1D, self).__init__(root_mesh)
         if not crop:
             crop = [0, 0]
         self.Tree = {0: [root_mesh]}
         self.refinement_coefficient = refinement_coefficient
         self.aligned = aligned
-        self.levels = self.Tree.keys()
         self.crop = np.array(crop)
 
-    def get_root_mesh(self):
-        return self.Tree[0][0]
-
     def add_mesh(self, mesh):
-        level = m.log(self.get_root_mesh().phys_step / mesh.phys_step, self.refinement_coefficient)
+        level = m.log(self.root_mesh.physical_step / mesh.physical_step, self.refinement_coefficient)
         # print level, np.floor(level), int(m.floor(level)), abs(m.floor(level) - level), level.is_integer()
         # if abs(m.floor(level) - level) > 1e-10:
         if not check_if_integer(level, 1e-10):
             raise Exception('all child meshes must have step multiple to the root mesh with refinement coefficient')
-        if self.aligned and not self.get_root_mesh().is_aligned_with(mesh):
+        if self.aligned and not self.root_mesh.is_aligned_with(mesh):
             raise Exception('all child meshes must be aligned with the root mesh')
         # level = int(m.floor(level))
         lower_estimation = m.floor(level)
@@ -222,8 +87,8 @@ class Uniform1DMeshesTree(object):
     def trim(self, debug=False):
         if debug:
             print('Cropping', np.sum(self.crop), 'elements (of root_mesh):', self.crop)
-        self.get_root_mesh().crop = self.crop
-        self.get_root_mesh().trim()
+        self.root_mesh.crop = self.crop
+        self.root_mesh.trim()
         level = 1
         trimmed = True if level > self.levels[-1] else False
         while not trimmed:
@@ -292,7 +157,6 @@ class Uniform1DMeshesTree(object):
         if offset != 0:
             for level in self.Tree.keys():
                 self.Tree[level - offset] = self.Tree.pop(level)
-        self.levels = self.Tree.keys()
 
     def merge_overlaps(self, debug=False):
         # print 'checking overlaps'
