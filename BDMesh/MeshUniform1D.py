@@ -117,7 +117,7 @@ class MeshUniform1D(Mesh1D):
         if check_if_integer(step_ratio, 1e-8):
             for i in range(big_mesh.num - small_mesh.num):
                 shift = (big_mesh.physical_nodes[i:i + small_mesh.num] - small_mesh.physical_nodes) / min_step
-                print('SHIFT: %3.12f, step ratio: %2.12f' % (min(abs(shift)), step_ratio))
+                print(i, 'SHIFT: %3.12f, step ratio: %2.12f' % (min(abs(shift)), step_ratio))
                 if check_if_integer(min(abs(shift)), 1e-6):
                     return True
             return False
