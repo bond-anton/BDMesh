@@ -114,6 +114,7 @@ class MeshUniform1D(Mesh1D):
             if check_if_integer(shift[0], 1e-6):
                 return True
             else:
+                print('SHIFT #3.12f', shift[0])
                 return False
         else:
             print(abs(m.floor(step_ratio) - step_ratio))
