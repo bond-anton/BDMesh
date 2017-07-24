@@ -111,10 +111,10 @@ class MeshUniform1D(Mesh1D):
         step_ratio = max_step / min_step
         if check_if_integer(step_ratio, 1e-8):
             shift = (mesh.physical_nodes[:min_size] - self.physical_nodes[:min_size]) / min_step
+            print('SHIFT: #3.12f, step ratio: %2.12f', (shift[0], step_ratio))
             if check_if_integer(shift[0], 1e-6):
                 return True
             else:
-                print('SHIFT #3.12f', shift[0])
                 return False
         else:
             print(abs(m.floor(step_ratio) - step_ratio))
