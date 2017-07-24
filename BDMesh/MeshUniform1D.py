@@ -105,19 +105,22 @@ class MeshUniform1D(Mesh1D):
 
     def is_aligned_with(self, mesh):
         assert isinstance(mesh, MeshUniform1D)
-        min_size = min(mesh.num, self.num)
+        if mesh.num < self.num:
+            big_mesh = self
+            small_mesh = mesh
+        else:
+            big_mesh = mesh
+            small_mesh = self
         min_step = min(mesh.physical_step, self.physical_step)
         max_step = max(mesh.physical_step, self.physical_step)
         step_ratio = max_step / min_step
         if check_if_integer(step_ratio, 1e-8):
-            shift = (mesh.physical_nodes[:min_size] - self.physical_nodes[:min_size]) / min_step
-            print(mesh.physical_nodes[0], self.physical_nodes[0], min_step)
-            print(mesh.physical_nodes[0] - self.physical_nodes[0])
-            print('SHIFT: %3.12f, step ratio: %2.12f' % (min(abs(shift)), step_ratio))
-            if check_if_integer(min(shift), 1e-6):
-                return True
-            else:
-                return False
+            for i in range(big_mesh.num - small_mesh.num):
+                shift = (big_mesh.physical_nodes[i:i + small_mesh.num] - small_mesh.physical_nodes) / min_step
+                print('SHIFT: %3.12f, step ratio: %2.12f' % (min(abs(shift)), step_ratio))
+                if check_if_integer(min(abs(shift)), 1e-6):
+                    return True
+            return False
         else:
             print(abs(m.floor(step_ratio) - step_ratio))
             return False
