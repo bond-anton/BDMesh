@@ -114,7 +114,7 @@ class MeshUniform1D(Mesh1D):
             print(mesh.physical_nodes[0], self.physical_nodes[0], min_step)
             print(mesh.physical_nodes[0] - self.physical_nodes[0])
             print('SHIFT: %3.12f, step ratio: %2.12f' % (shift[0], step_ratio))
-            if check_if_integer(shift[0], 0.1 * min_step):
+            if check_if_integer(shift[0], 1e-6):
                 return True
             else:
                 return False
