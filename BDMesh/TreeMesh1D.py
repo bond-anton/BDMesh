@@ -1,6 +1,5 @@
 from __future__ import division, print_function
 import numpy as np
-from numbers import Number
 
 from BDMesh import Mesh1D
 from ._helpers import check_if_integer
@@ -33,7 +32,7 @@ class TreeMesh1D(object):
 
     def add_mesh(self, mesh, level):
         assert isinstance(mesh, Mesh1D)
-        assert isinstance(level, Number)
+        assert isinstance(level, (float, int))
         if not check_if_integer(level, 1e-10):
             raise Exception('all child meshes must have step multiple to the root mesh with refinement coefficient')
         try:
@@ -113,8 +112,7 @@ class TreeMesh1D(object):
             for level in self.tree.keys():
                 self.tree[level - offset] = self.tree.pop(level)
 
-    def merge_overlaps(self, debug=False):
-        # print 'checking overlaps'
+    def merge_overlaps(self):
         level = 0
         while level < len(self.tree.keys()):
             overlap_found = False
@@ -123,10 +121,7 @@ class TreeMesh1D(object):
                 i_list.append(i)
                 for j in range(len(self.tree[level])):
                     if j not in i_list:
-                        # print i, j
                         if self.tree[level][i].overlap_with(self.tree[level][j]):
-                            if debug:
-                                print('meshes overlap. MERGING.')
                             overlap_found = True
                             self.tree[level][i].merge_with(self.tree[level][j])
                             self.tree[level].remove(self.tree[level][j])

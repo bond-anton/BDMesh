@@ -96,6 +96,9 @@ class Mesh1D(object):
         except TypeError:
             raise TypeError(local_nodes, 'is not iterable')
         self.__local_nodes = np.array(local_nodes).astype(np.float)
+        # TODO: better solution treatment (interpolation?)
+        self.solution = np.zeros(self.num)
+        self.residual = np.zeros(self.num)
 
     @property
     def jacobian(self):
