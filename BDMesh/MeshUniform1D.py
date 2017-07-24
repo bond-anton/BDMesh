@@ -116,7 +116,9 @@ class MeshUniform1D(Mesh1D):
         step_ratio = max_step / min_step
         if check_if_integer(step_ratio, 1e-8):
             shift = min(min(abs(big_mesh.physical_nodes - small_mesh.physical_boundary_1) / min_step),
-                        min(abs(big_mesh.physical_nodes - small_mesh.physical_boundary_2) / min_step))
+                        min(abs(big_mesh.physical_nodes - small_mesh.physical_boundary_2) / min_step),
+                        min(abs(small_mesh.physical_nodes - big_mesh.physical_boundary_1) / min_step),
+                        min(abs(small_mesh.physical_nodes - big_mesh.physical_boundary_2) / min_step))
             #for i in range(big_mesh.num - small_mesh.num + 1):
             #    shift = (big_mesh.physical_nodes[i:i + small_mesh.num] - small_mesh.physical_nodes) / min_step
                 #print(i, 'SHIFT: %3.12f, step ratio: %2.12f' % (min(abs(shift)), step_ratio))
