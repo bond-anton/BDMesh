@@ -24,7 +24,7 @@ class TreeMesh1D(object):
 
     @property
     def levels(self):
-        return self.tree.keys()
+        return list(self.tree.keys())
 
     @property
     def root_mesh(self):
