@@ -35,3 +35,4 @@ class TestMesh1D(unittest.TestCase):
 
     def test_local_nodes(self):
         np.testing.assert_equal(self.mesh.local_nodes, np.array([0.0, 1.0]))
+        self.assertEqual(self.mesh.num, 2)
