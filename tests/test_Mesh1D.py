@@ -50,6 +50,12 @@ class TestMesh1D(unittest.TestCase):
         self.assertEqual(self.mesh.num, 2)
         self.mesh.local_nodes = np.array([0.0, 0.5, 1.0])
         self.assertEqual(self.mesh.num, 3)
+        with self.assertRaises(TypeError):
+            self.mesh.local_nodes = 1
+        with self.assertRaises(ValueError):
+            self.mesh.local_nodes = 'a'
+        with self.assertRaises(ValueError):
+            self.mesh.local_nodes = 'aa'
         with self.assertRaises(AttributeError):
             self.mesh.num = 4
         self.assertEqual(self.mesh.num, 3)

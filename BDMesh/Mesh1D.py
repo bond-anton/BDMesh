@@ -109,6 +109,9 @@ class Mesh1D(object):
             _ = iter(local_nodes)
         except TypeError:
             raise TypeError(local_nodes, 'is not iterable')
+        if len(local_nodes) < 2:
+            raise ValueError('Mesh must have at least two nodes')
+
         self.__local_nodes = np.array(local_nodes).astype(np.float)
 
     @property
