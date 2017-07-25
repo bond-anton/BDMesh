@@ -76,6 +76,8 @@ class TestMesh1D(unittest.TestCase):
         self.assertIsNone(self.mesh.boundary_condition_1)
         with self.assertRaises(ValueError):
             self.mesh.boundary_condition_1 = 'a'
+        with self.assertRaises(ValueError):
+            self.mesh.boundary_condition_2 = 'a'
 
     def test_solution_residual(self):
         np.testing.assert_equal(self.mesh.solution, np.zeros(2))
