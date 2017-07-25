@@ -48,8 +48,9 @@ class Mesh1D(object):
         assert isinstance(other, Mesh1D)
         if self.physical_boundary_1 == other.physical_boundary_1:
             if self.physical_boundary_2 == other.physical_boundary_2:
-                if (self.local_nodes == other.local_nodes).all():
-                    return True
+                if self.local_nodes.size == other.local_nodes.size:
+                    if np.allclose(self.local_nodes, other.local_nodes):
+                        return True
         return False
 
     @property
@@ -82,7 +83,10 @@ class Mesh1D(object):
 
     @boundary_condition_1.setter
     def boundary_condition_1(self, boundary_condition_1):
-        self.__boundary_condition_1 = boundary_condition_1
+        if boundary_condition_1 is None or isinstance(boundary_condition_1, Number):
+            self.__boundary_condition_1 = boundary_condition_1
+        else:
+            raise ValueError('Boundary condition must be either number or None')
 
     @property
     def boundary_condition_2(self):
@@ -90,7 +94,10 @@ class Mesh1D(object):
 
     @boundary_condition_2.setter
     def boundary_condition_2(self, boundary_condition_2):
-        self.__boundary_condition_2 = boundary_condition_2
+        if boundary_condition_2 is None or isinstance(boundary_condition_2, Number):
+            self.__boundary_condition_2 = boundary_condition_2
+        else:
+            raise ValueError('Boundary condition must be either number or None')
 
     @property
     def local_nodes(self):
@@ -124,7 +131,7 @@ class Mesh1D(object):
 
     @num.setter
     def num(self, num):
-        pass
+        raise AttributeError("can't set attribute")
 
     @property
     def solution(self):
@@ -201,18 +208,16 @@ class Mesh1D(object):
     def merge_with(self, mesh):
         assert isinstance(mesh, Mesh1D)
         if self.overlap_with(mesh):
+            merged_physical_nodes = np.unique(np.concatenate((self.physical_nodes, mesh.physical_nodes)).round(12))
             if self.physical_boundary_1 > mesh.physical_boundary_1:
                 self.boundary_condition_1 = mesh.boundary_condition_1
                 self.physical_boundary_1 = mesh.physical_boundary_1
             if self.physical_boundary_2 < mesh.physical_boundary_2:
                 self.boundary_condition_2 = mesh.boundary_condition_2
                 self.physical_boundary_2 = mesh.physical_boundary_2
-            # TODO: correct nodes merging
-            self.local_nodes = np.union1d(self.local_nodes, mesh.local_nodes)
+            self.local_nodes = self.to_local_coordinate(merged_physical_nodes)
             # TODO: solution/residual merging
             self.solution = np.zeros(self.num)
             self.residual = np.zeros(self.num)
-        else:
-            print('meshes do not overlap')
 
     # TODO: add/remove nodes routines
