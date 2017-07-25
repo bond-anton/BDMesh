@@ -37,6 +37,12 @@ class Mesh1DUniform(Mesh1D):
             self.physical_step = physical_step
         self.crop = crop
 
+    def __str__(self):
+        return 'Mesh1DUniform: [%2.2g; %2.2g], %2.2g step, %d nodes' % (self.physical_boundary_1,
+                                                                        self.physical_boundary_2,
+                                                                        self.physical_step,
+                                                                        self.num)
+
     @property
     def physical_step(self):
         return self.__physical_step

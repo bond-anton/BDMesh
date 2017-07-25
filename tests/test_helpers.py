@@ -1,8 +1,10 @@
+from __future__ import division, print_function
 from BDMesh._helpers import check_if_integer
 
 import unittest
 
-class TestMesh1D(unittest.TestCase):
+
+class TestHelpers(unittest.TestCase):
 
     def setUp(self):
         pass
