@@ -218,7 +218,7 @@ class Mesh1D(object):
             if self.physical_boundary_2 < mesh.physical_boundary_2:
                 self.boundary_condition_2 = mesh.boundary_condition_2
                 self.physical_boundary_2 = mesh.physical_boundary_2
-            self.local_nodes = self.to_local_coordinate(merged_physical_nodes)
+            self.local_nodes = np.concatenate(([0.0], self.to_local_coordinate(merged_physical_nodes[1:-1]), [1.0]))
             # TODO: solution/residual merging
             self.solution = np.zeros(self.num)
             self.residual = np.zeros(self.num)
