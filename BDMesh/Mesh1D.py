@@ -9,7 +9,7 @@ class Mesh1D(object):
     """
 
     def __init__(self, physical_boundary_1, physical_boundary_2,
-                 boundary_condition_1, boundary_condition_2):
+                 boundary_condition_1=None, boundary_condition_2=None):
         """
         UniformMesh1D constructor
         :param physical_boundary_1: float value of left physical boundary position
@@ -19,8 +19,6 @@ class Mesh1D(object):
         """
         assert isinstance(physical_boundary_1, Number)
         assert isinstance(physical_boundary_2, Number)
-        assert isinstance(boundary_condition_1, Number)
-        assert isinstance(boundary_condition_2, Number)
         self.__physical_boundary_1 = None
         self.__physical_boundary_2 = None
         self.__boundary_condition_1 = None
@@ -42,6 +40,17 @@ class Mesh1D(object):
         self.local_nodes = np.array([0.0, 1.0])
         self.solution = np.zeros(self.num)
         self.residual = np.zeros(self.num)
+
+    def __str__(self):
+        return 'Mesh1D: [%2.2g; %2.2g], %d nodes' % (self.physical_boundary_1, self.physical_boundary_2, self.num)
+
+    def __eq__(self, other):
+        assert isinstance(other, Mesh1D)
+        if self.physical_boundary_1 == other.physical_boundary_1:
+            if self.physical_boundary_2 == other.physical_boundary_2:
+                if (self.local_nodes == other.local_nodes).all():
+                    return True
+        return False
 
     @property
     def physical_boundary_1(self):
@@ -73,8 +82,7 @@ class Mesh1D(object):
 
     @boundary_condition_1.setter
     def boundary_condition_1(self, boundary_condition_1):
-        assert isinstance(boundary_condition_1, Number)
-        self.__boundary_condition_1 = float(boundary_condition_1)
+        self.__boundary_condition_1 = boundary_condition_1
 
     @property
     def boundary_condition_2(self):
@@ -82,8 +90,7 @@ class Mesh1D(object):
 
     @boundary_condition_2.setter
     def boundary_condition_2(self, boundary_condition_2):
-        assert isinstance(boundary_condition_2, Number)
-        self.__boundary_condition_2 = float(boundary_condition_2)
+        self.__boundary_condition_2 = boundary_condition_2
 
     @property
     def local_nodes(self):
@@ -96,9 +103,6 @@ class Mesh1D(object):
         except TypeError:
             raise TypeError(local_nodes, 'is not iterable')
         self.__local_nodes = np.array(local_nodes).astype(np.float)
-        # TODO: better solution treatment (interpolation?)
-        #self.solution = np.zeros(self.num)
-        #self.residual = np.zeros(self.num)
 
     @property
     def jacobian(self):
@@ -117,6 +121,10 @@ class Mesh1D(object):
     @property
     def num(self):
         return len(self.local_nodes)
+
+    @num.setter
+    def num(self, num):
+        pass
 
     @property
     def solution(self):

@@ -7,28 +7,34 @@ from BDMesh import Mesh1D
 from ._helpers import check_if_integer
 
 
-class MeshUniform1D(Mesh1D):
+class Mesh1DUniform(Mesh1D):
     """
     One dimensional uniform mesh for boundary problems
     """
 
-    def __init__(self, physical_boundary_1, physical_boundary_2, physical_step,
-                 boundary_condition_1, boundary_condition_2, crop=None):
+    def __init__(self, physical_boundary_1, physical_boundary_2,
+                 boundary_condition_1=None, boundary_condition_2=None,
+                 physical_step=None, num=None, crop=None):
         """
         UniformMesh1D constructor
-        :param physical_boundary_1: float value of left physical boundary position
-        :param physical_boundary_2: float value of right physical boundary position
-        :param physical_step: float value of mesh physical step size
-        :param boundary_condition_1: float value of boundary condition at left physical boundary
-        :param boundary_condition_2: float value of boundary condition at right physical boundary
-        :param crop: iterable of two integers specifying number of nodes to crop from each side of mesh
+        :param physical_boundary_1: float value of left physical boundary position.
+        :param physical_boundary_2: float value of right physical boundary position.
+        :param boundary_condition_1: float value of boundary condition at left physical boundary.
+        :param boundary_condition_2: float value of boundary condition at right physical boundary.
+        :param physical_step: float value of desired mesh physical step size. Mesh will use closest possible value.
+        :param num: number of mesh nodes.
+        :param crop: iterable of two integers specifying number of nodes to crop from each side of mesh.
         """
-        super(MeshUniform1D, self).__init__(physical_boundary_1, physical_boundary_2,
-                                            boundary_condition_1, boundary_condition_2)
+        super(Mesh1DUniform, self).__init__(physical_boundary_1, physical_boundary_2,
+                                            boundary_condition_1=boundary_condition_1,
+                                            boundary_condition_2=boundary_condition_2)
         self.__physical_step = None
         self.__local_step = None
         self.__crop = None
-        self.physical_step = physical_step
+        if physical_step is None:
+            self.num = num
+        else:
+            self.physical_step = physical_step
         self.crop = crop
 
     @property
@@ -38,11 +44,24 @@ class MeshUniform1D(Mesh1D):
     @physical_step.setter
     def physical_step(self, physical_step):
         assert isinstance(physical_step, Number)
-        self.__physical_step = float(abs(physical_step))
-        num_points = int(np.ceil((self.physical_boundary_2 - self.physical_boundary_1) / self.__physical_step) + 1)
-        if self.physical_boundary_1 + (num_points - 1) * self.__physical_step > self.physical_boundary_2:
+        num_points = int(np.ceil((self.physical_boundary_2 - self.physical_boundary_1) / float(abs(physical_step))) + 1)
+        if self.physical_boundary_1 + (num_points - 1) * float(abs(physical_step)) > self.physical_boundary_2:
             num_points -= 1
         self.local_nodes = np.linspace(0.0, 1.0, num=num_points, endpoint=True)
+        self.__physical_step = float(abs(self.local_step)) * self.jacobian
+
+    @property
+    def num(self):
+        return len(self.local_nodes)
+
+    @num.setter
+    def num(self, num):
+        if num is None or not check_if_integer(num):
+            num_points = 2
+        else:
+            num_points = int(num)
+        self.local_nodes = np.linspace(0.0, 1.0, num=num_points, endpoint=True)
+        self.__physical_step = float(abs(self.local_step)) * self.jacobian
 
     @property
     def local_step(self):
@@ -93,7 +112,7 @@ class MeshUniform1D(Mesh1D):
         self.crop = np.array([0, 0])
 
     def inner_mesh_indexes(self, mesh):
-        assert isinstance(mesh, MeshUniform1D)
+        assert isinstance(mesh, Mesh1DUniform)
         if mesh.is_inside_of(self):
             local_start = self.to_local_coordinate(mesh.physical_boundary_1)
             local_stop = self.to_local_coordinate(mesh.physical_boundary_2)
@@ -104,7 +123,7 @@ class MeshUniform1D(Mesh1D):
             return [None, None]
 
     def is_aligned_with(self, mesh):
-        assert isinstance(mesh, MeshUniform1D)
+        assert isinstance(mesh, Mesh1DUniform)
         if mesh.num < self.num:
             big_mesh = self
             small_mesh = mesh
@@ -142,7 +161,7 @@ class MeshUniform1D(Mesh1D):
             return False
 
     def merge_with(self, mesh):
-        assert isinstance(mesh, MeshUniform1D)
+        assert isinstance(mesh, Mesh1DUniform)
         if self.overlap_with(mesh) and abs(self.physical_step - mesh.physical_step) < 0.1 * self.physical_step:
             if self.is_aligned_with(mesh):
                 if self.physical_boundary_1 > mesh.physical_boundary_1:

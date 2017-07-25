@@ -2,7 +2,7 @@ from __future__ import division, print_function
 import numpy as np
 from matplotlib import pyplot as plt
 
-from BDMesh import TreeMeshUniform1D, MeshUniform1D
+from BDMesh import TreeMesh1DUniform, Mesh1DUniform
 
 
 def plot_tree(mesh_tree, ax=None):
@@ -22,14 +22,14 @@ def plot_tree(mesh_tree, ax=None):
     if show:
         plt.show()
 
-root_mesh = MeshUniform1D(0.0, 10.0, 1, boundary_condition_1=1, boundary_condition_2=0)
-child_mesh_1_1 = MeshUniform1D(0.0, 9.0, 0.5, boundary_condition_1=1, boundary_condition_2=0)
-child_mesh_1_2 = MeshUniform1D(3.0, 17.0, 0.5, boundary_condition_1=1, boundary_condition_2=0)
-child_mesh_1_3 = MeshUniform1D(6.0, 8.0, 0.5, boundary_condition_1=1, boundary_condition_2=0)
-child_mesh_2_1 = MeshUniform1D(1.0, 2.0, 0.25, boundary_condition_1=1, boundary_condition_2=0)
-child_mesh_2_2 = MeshUniform1D(2.0, 5.0, 0.25, boundary_condition_1=1, boundary_condition_2=0)
-child_mesh_3_1 = MeshUniform1D(1.0, 1.5, 0.125, boundary_condition_1=1, boundary_condition_2=0)
-Meshes = TreeMeshUniform1D(root_mesh)
+root_mesh = Mesh1DUniform(0.0, 10.0, physical_step=1.2, boundary_condition_1=1, boundary_condition_2=0)
+child_mesh_1_1 = Mesh1DUniform(0.0, 9.0, physical_step=0.5, boundary_condition_1=1, boundary_condition_2=0)
+child_mesh_1_2 = Mesh1DUniform(3.0, 17.0, physical_step=0.5, boundary_condition_1=1, boundary_condition_2=0)
+child_mesh_1_3 = Mesh1DUniform(6.0, 8.0, physical_step=0.5, boundary_condition_1=1, boundary_condition_2=0)
+child_mesh_2_1 = Mesh1DUniform(1.0, 2.0, physical_step=0.25, boundary_condition_1=1, boundary_condition_2=0)
+child_mesh_2_2 = Mesh1DUniform(2.0, 5.0, physical_step=0.25, boundary_condition_1=1, boundary_condition_2=0)
+child_mesh_3_1 = Mesh1DUniform(1.0, 1.5, physical_step=0.125, boundary_condition_1=1, boundary_condition_2=0)
+Meshes = TreeMesh1DUniform(root_mesh, aligned=False)
 Meshes.add_mesh(child_mesh_1_1)
 print(Meshes.tree)
 Meshes.add_mesh(child_mesh_1_2)
@@ -40,4 +40,6 @@ Meshes.add_mesh(child_mesh_2_2)
 Meshes.add_mesh(child_mesh_3_1)
 
 print(Meshes.tree)
+print(root_mesh.physical_nodes)
+print(root_mesh.physical_step, np.gradient(root_mesh.physical_nodes))
 plot_tree(Meshes)
