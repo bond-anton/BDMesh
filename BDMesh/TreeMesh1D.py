@@ -34,7 +34,7 @@ class TreeMesh1D(object):
         assert isinstance(mesh, Mesh1D)
         assert isinstance(level, (float, int))
         if not check_if_integer(level, 1e-10):
-            raise Exception('all child meshes must have step multiple to the root mesh with refinement coefficient')
+            raise ValueError('level must be integer')
         try:
             self.tree[int(level)].append(mesh)
         except KeyError:
@@ -113,20 +113,19 @@ class TreeMesh1D(object):
                 self.tree[level - offset] = self.tree.pop(level)
 
     def merge_overlaps(self):
-        level = 0
-        while level < len(self.tree.keys()):
-            overlap_found = False
-            i_list = []
-            for i in range(len(self.tree[level])):
-                i_list.append(i)
-                for j in range(len(self.tree[level])):
-                    if j not in i_list:
-                        if self.tree[level][i].overlap_with(self.tree[level][j]):
-                            overlap_found = True
-                            self.tree[level][i].merge_with(self.tree[level][j])
-                            self.tree[level].remove(self.tree[level][j])
-                            break
-                if overlap_found:
-                    break
-            if not overlap_found:
-                level += 1
+        for level in self.levels:
+            overlap_found = True
+            while overlap_found:
+                overlap_found = False
+                i_list = []
+                for i in range(len(self.tree[level])):
+                    i_list.append(i)
+                    for j in range(len(self.tree[level])):
+                        if j not in i_list:
+                            if self.tree[level][i].overlap_with(self.tree[level][j]):
+                                overlap_found = True
+                                self.tree[level][i].merge_with(self.tree[level][j])
+                                self.tree[level].remove(self.tree[level][j])
+                                break
+                    if overlap_found:
+                        break
