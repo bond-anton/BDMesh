@@ -51,7 +51,7 @@ class Mesh1DUniform(Mesh1D):
     def physical_step(self, physical_step):
         assert isinstance(physical_step, Number)
         physical_step = float(abs(physical_step))
-        if np.allclose(physical_step, 0.0):
+        if np.allclose([physical_step], [0.0]):
             raise ValueError('step can not be zero!')
         elif physical_step > self.jacobian:
             physical_step = self.jacobian
@@ -90,7 +90,7 @@ class Mesh1DUniform(Mesh1D):
         local_step = float(abs(local_step))
         if local_step > 1:
             local_step = 1
-        elif np.allclose(local_step, 0.0):
+        elif np.allclose([local_step], [0.0]):
             raise ValueError('step can not be zero!')
         self.physical_step = local_step * self.jacobian
 
@@ -130,13 +130,13 @@ class Mesh1DUniform(Mesh1D):
         self.boundary_condition_2 = self.solution[-1]
         self.crop = np.array([0, 0])
 
-    def inner_mesh_indexes(self, mesh):
-        assert isinstance(mesh, Mesh1DUniform)
+    def inner_mesh_indices(self, mesh):
+        assert isinstance(mesh, Mesh1D)
         if mesh.is_inside_of(self):
             local_start = self.to_local_coordinate(mesh.physical_boundary_1)
             local_stop = self.to_local_coordinate(mesh.physical_boundary_2)
-            idx1 = np.where(abs(self.local_nodes - local_start) < self.local_step / 2)[0][0]
-            idx2 = np.where(abs(self.local_nodes - local_stop) < self.local_step / 2)[0][0]
+            idx1 = np.where(abs(self.local_nodes - local_start) <= self.local_step / 2)[0][0]
+            idx2 = np.where(abs(self.local_nodes - local_stop) <= self.local_step / 2)[0][0]
             return [idx1, idx2]
         else:
             return [None, None]

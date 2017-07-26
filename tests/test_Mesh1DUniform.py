@@ -3,7 +3,7 @@ import math as m
 import numpy as np
 import unittest
 
-from BDMesh import Mesh1DUniform
+from BDMesh import Mesh1DUniform, Mesh1D
 
 
 class TestMesh1DUniform(unittest.TestCase):
@@ -121,4 +121,22 @@ class TestMesh1DUniform(unittest.TestCase):
         trimmed = Mesh1DUniform(3, 8, physical_step=1.0)
         self.assertEqual(self.mesh, trimmed)
 
-
+    def test_inner_mesh_indices(self):
+        self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
+        inner = Mesh1DUniform(3, 7, physical_step=1.0)
+        indices = self.mesh.inner_mesh_indices(inner)
+        self.assertEqual(indices, [3, 7])
+        inner = Mesh1D(3, 7)
+        indices = self.mesh.inner_mesh_indices(inner)
+        self.assertEqual(indices, [3, 7])
+        with self.assertRaises(AssertionError):
+            self.mesh.inner_mesh_indices(1)
+        inner = Mesh1DUniform(3, 17, physical_step=1.0)
+        indices = self.mesh.inner_mesh_indices(inner)
+        self.assertEqual(indices, [None, None])
+        inner = Mesh1DUniform(-3, 17, physical_step=1.0)
+        indices = self.mesh.inner_mesh_indices(inner)
+        self.assertEqual(indices, [None, None])
+        inner = Mesh1DUniform(0.55, 9.55, physical_step=1.0)
+        indices = self.mesh.inner_mesh_indices(inner)
+        self.assertEqual(indices, [1, 10])
