@@ -51,6 +51,10 @@ class Mesh1DUniform(Mesh1D):
     def physical_step(self, physical_step):
         assert isinstance(physical_step, Number)
         physical_step = float(abs(physical_step))
+        if np.allclose(physical_step, 0.0):
+            raise ValueError('step can not be zero!')
+        elif physical_step > self.jacobian:
+            physical_step = self.jacobian
         num_points = int(np.ceil(self.jacobian / physical_step) + 1)
         if self.physical_boundary_1 + (num_points - 1) * physical_step > self.physical_boundary_2:
             num_points -= 1
@@ -77,7 +81,12 @@ class Mesh1DUniform(Mesh1D):
     @local_step.setter
     def local_step(self, local_step):
         assert isinstance(local_step, Number)
-        self.physical_step = float(abs(local_step)) * self.jacobian
+        local_step = float(abs(local_step))
+        if local_step > 1:
+            local_step = 1
+        elif np.allclose(local_step, 0.0):
+            raise ValueError('step can not be zero!')
+        self.physical_step = local_step * self.jacobian
 
     @property
     def crop(self):
