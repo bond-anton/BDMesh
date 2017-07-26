@@ -111,24 +111,21 @@ class Mesh1DUniform(Mesh1D):
                 raise ValueError('crop must be iterable of size 2')
             else:
                 crop = np.array(crop).astype(np.int)
+                if np.sum(crop) > self.num - 2:
+                    raise ValueError('At least two nodes must remain after trimming')
                 if (crop < 0).any():
                     raise ValueError('crop positions must be greater than zero')
                 self.__crop = crop
 
-    def trim(self, debug=False):
-        if debug:
-            print('Cropping', np.sum(self.crop), 'elements')
-            print('Physical boundary 1:', self.physical_boundary_1)
-            print('Physical boundary 2:', self.physical_boundary_2)
+    def trim(self):
+        solution = self.solution[self.crop[0]:-self.crop[1]]
+        residual = self.residual[self.crop[0]:-self.crop[1]]
         self.physical_boundary_1 += self.crop[0] * self.physical_step
         self.physical_boundary_2 -= self.crop[1] * self.physical_step
-        if debug:
-            print(' -> Physical boundary 1:', self.physical_boundary_1)
-            print(' -> Physical boundary 2:', self.physical_boundary_2)
         num_points = int(np.ceil(self.num - np.sum(self.crop)))
         self.local_nodes = np.linspace(0.0, 1.0, num=num_points, endpoint=True)
-        self.solution = self.solution[self.crop[0]:self.solution.size - self.crop[1]]
-        self.residual = self.residual[self.crop[0]:self.residual.size - self.crop[1]]
+        self.solution = solution
+        self.residual = residual
         self.boundary_condition_1 = self.solution[0]
         self.boundary_condition_2 = self.solution[-1]
         self.crop = np.array([0, 0])

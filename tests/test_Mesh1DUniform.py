@@ -111,5 +111,14 @@ class TestMesh1DUniform(unittest.TestCase):
             self.mesh.crop = [3, -2]
         with self.assertRaises(ValueError):
             self.mesh.crop = [3, 2, 1]
+        with self.assertRaises(ValueError):
+            self.mesh.crop = [5, 5]
+
+    def test_trim(self):
+        self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
+        self.mesh.crop = [3, 2]
+        self.mesh.trim()
+        trimmed = Mesh1DUniform(3, 8, physical_step=1.0)
+        self.assertEqual(self.mesh, trimmed)
 
 

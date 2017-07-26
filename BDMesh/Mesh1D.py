@@ -38,8 +38,6 @@ class Mesh1D(object):
             self.boundary_condition_1 = boundary_condition_2
 
         self.local_nodes = np.array([0.0, 1.0])
-        self.solution = np.zeros(self.num)
-        self.residual = np.zeros(self.num)
 
     def __str__(self):
         return 'Mesh1D: [%2.2g; %2.2g], %d nodes' % (self.physical_boundary_1, self.physical_boundary_2, self.num)
@@ -112,7 +110,15 @@ class Mesh1D(object):
         if len(local_nodes) < 2:
             raise ValueError('Mesh must have at least two nodes')
         if (np.array(local_nodes).astype(np.float)[[0, -1]] == np.array([0.0, 1.0])).all():
-            self.__local_nodes = np.array(local_nodes).astype(np.float)
+            if self.__local_nodes is None:
+                self.__local_nodes = np.array(local_nodes).astype(np.float)
+                self.solution = np.zeros(self.num)
+                self.residual = np.zeros(self.num)
+            else:
+                physical_nodes_old = self.physical_nodes
+                self.__local_nodes = np.array(local_nodes).astype(np.float)
+                self.solution = np.interp(self.physical_nodes, physical_nodes_old, self.solution)
+                self.residual = np.interp(self.physical_nodes, physical_nodes_old, self.residual)
         else:
             raise ValueError('Local mesh nodes must start with 0.0 and end with 1.0')
 
