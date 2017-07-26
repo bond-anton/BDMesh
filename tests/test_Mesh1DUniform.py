@@ -1,4 +1,5 @@
 from __future__ import division, print_function
+import random
 import math as m
 import numpy as np
 import unittest
@@ -181,17 +182,20 @@ class TestMesh1DUniform(unittest.TestCase):
         self.mesh.merge_with(other)
         self.assertEqual(self.mesh, other)
         # check mearging with floating point step mesh
-        self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
-        num = self.mesh.num - 1
-        start = 2
-        for i in range(1, 10):
-            other = Mesh1DUniform(start, start + 10, num=4 * num + 1)
-            self.mesh.merge_with(other)
-            merged = Mesh1DUniform(0, start + 10, physical_step=other.physical_step)
-            self.assertEqual(self.mesh, merged)
-            num = other.num - 1
-            start += other.physical_step
+        for step_coeff in range(1, 5):
             self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
+            num = self.mesh.num - 1
+            start = -5
+            for i in range(1, 10):
+                other = Mesh1DUniform(start, start + 10, num=step_coeff * num + 1)
+                self.mesh.merge_with(other)
+                merged = Mesh1DUniform(min(self.mesh.physical_boundary_1, start),
+                                       max(self.mesh.physical_boundary_2, start + 10),
+                                       physical_step=other.physical_step)
+                self.assertEqual(self.mesh, merged)
+                num = other.num - 1
+                start += 1 + other.physical_step * random.choice([-1, 1])
+                self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
         # check merging with not overlapping mesh
         self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
         with self.assertRaises(ValueError):
