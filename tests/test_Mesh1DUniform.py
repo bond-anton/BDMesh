@@ -30,3 +30,12 @@ class TestMesh1DUniform(unittest.TestCase):
         self.mesh = Mesh1DUniform(-10, 10, physical_step=1.0)
         other_mesh = Mesh1DUniform(-10, 10, num=21)
         self.assertEqual(self.mesh, other_mesh)
+
+    def test_physical_step(self):
+        self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
+        self.assertEqual(self.mesh.physical_step, 1.0)
+        with self.assertRaises(AssertionError):
+            self.mesh.physical_step = 'a'
+        self.mesh.physical_step = 1.1
+        print(self.mesh.physical_step)
+        self.assertNotEqual(self.mesh.physical_step, 1.1)

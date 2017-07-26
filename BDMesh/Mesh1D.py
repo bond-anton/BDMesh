@@ -111,8 +111,10 @@ class Mesh1D(object):
             raise TypeError(local_nodes, 'is not iterable')
         if len(local_nodes) < 2:
             raise ValueError('Mesh must have at least two nodes')
-
-        self.__local_nodes = np.array(local_nodes).astype(np.float)
+        if (np.array(local_nodes).astype(np.float)[[0, -1]] == np.array([0.0, 1.0])).all():
+            self.__local_nodes = np.array(local_nodes).astype(np.float)
+        else:
+            raise ValueError('Local mesh nodes must start with 0.0 and end with 1.0')
 
     @property
     def jacobian(self):

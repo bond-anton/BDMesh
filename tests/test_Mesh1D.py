@@ -56,6 +56,10 @@ class TestMesh1D(unittest.TestCase):
             self.mesh.local_nodes = 'a'
         with self.assertRaises(ValueError):
             self.mesh.local_nodes = 'aa'
+        with self.assertRaises(ValueError):
+            self.mesh.local_nodes = [1.0, 2.0]
+        with self.assertRaises(ValueError):
+            self.mesh.local_nodes = [1e-14, 1.0]
         with self.assertRaises(AttributeError):
             self.mesh.num = 4
         self.assertEqual(self.mesh.num, 3)
@@ -99,7 +103,7 @@ class TestMesh1D(unittest.TestCase):
         self.assertEqual(self.mesh.integrational_residual, np.trapz(self.mesh.residual, self.mesh.physical_nodes))
 
     def test_local_f(self):
-        a = np.linspace(0.0, 4*m.pi, num=101, endpoint=True)
+        a = np.linspace(0.0, 1.0, num=101, endpoint=True)
         self.mesh.local_nodes = a
         f = np.sin
         local_f = self.mesh.local_f(f)

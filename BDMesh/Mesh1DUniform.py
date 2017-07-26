@@ -50,11 +50,12 @@ class Mesh1DUniform(Mesh1D):
     @physical_step.setter
     def physical_step(self, physical_step):
         assert isinstance(physical_step, Number)
-        num_points = int(np.ceil((self.physical_boundary_2 - self.physical_boundary_1) / float(abs(physical_step))) + 1)
-        if self.physical_boundary_1 + (num_points - 1) * float(abs(physical_step)) > self.physical_boundary_2:
+        physical_step = float(abs(physical_step))
+        num_points = int(np.ceil(self.jacobian / physical_step) + 1)
+        if self.physical_boundary_1 + (num_points - 1) * physical_step > self.physical_boundary_2:
             num_points -= 1
         self.local_nodes = np.linspace(0.0, 1.0, num=num_points, endpoint=True)
-        self.__physical_step = float(abs(self.local_step)) * self.jacobian
+        self.__physical_step = self.local_step * self.jacobian
 
     @property
     def num(self):
@@ -67,7 +68,7 @@ class Mesh1DUniform(Mesh1D):
         else:
             num_points = int(num)
         self.local_nodes = np.linspace(0.0, 1.0, num=num_points, endpoint=True)
-        self.__physical_step = float(abs(self.local_step)) * self.jacobian
+        self.__physical_step = self.local_step * self.jacobian
 
     @property
     def local_step(self):
