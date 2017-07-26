@@ -143,36 +143,13 @@ class Mesh1DUniform(Mesh1D):
 
     def is_aligned_with(self, mesh):
         assert isinstance(mesh, Mesh1DUniform)
-        if mesh.num < self.num:
-            big_mesh = self
-            small_mesh = mesh
-        else:
-            big_mesh = mesh
-            small_mesh = self
         min_step = min(mesh.physical_step, self.physical_step)
         max_step = max(mesh.physical_step, self.physical_step)
         step_ratio = max_step / min_step
         if check_if_integer(step_ratio, 1e-8):
-            shift = abs(big_mesh.physical_boundary_1 - small_mesh.physical_boundary_1) / min_step
-            if check_if_integer(shift, 1e-6):
-                return True
-            shift = min(
-                min(abs(big_mesh.physical_nodes - small_mesh.physical_boundary_1) / min_step),
-                min(abs(big_mesh.physical_nodes - small_mesh.physical_boundary_2) / min_step),
-                min(abs(small_mesh.physical_nodes - big_mesh.physical_boundary_1) / min_step),
-                min(abs(small_mesh.physical_nodes - big_mesh.physical_boundary_2) / min_step)
-            )
-            if check_if_integer(shift, 1e-6):
-                return True
-            shifts = []
-            for i in range(small_mesh.num):
-                shift = min(abs(big_mesh.physical_nodes - small_mesh.physical_nodes[i]) / min_step)
-                shifts.append(shift)
-                if check_if_integer(shift, 1e-6):
-                    return True
-            shift = min(shifts)
-            print('SHIFT', shift)
-            if abs(round(shift)-shift) / shift < 1e-3:
+            shift = abs(self.physical_boundary_1 - mesh.physical_boundary_1) / min_step
+            if check_if_integer(shift, 1e-8):
+                print('done')
                 return True
             return False
         else:

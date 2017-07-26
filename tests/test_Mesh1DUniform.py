@@ -140,3 +140,24 @@ class TestMesh1DUniform(unittest.TestCase):
         inner = Mesh1DUniform(0.55, 9.55, physical_step=1.0)
         indices = self.mesh.inner_mesh_indices(inner)
         self.assertEqual(indices, [1, 10])
+
+    def test_aligned(self):
+        self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
+        # check if aligned with equal mesh
+        other = Mesh1DUniform(0, 10, physical_step=1.0)
+        self.assertTrue(self.mesh.is_aligned_with(other))
+        # check if aligned with integer node mesh
+        other = Mesh1DUniform(100, 110, physical_step=1.0)
+        self.assertTrue(self.mesh.is_aligned_with(other))
+        # check if aligned with floating point step mesh
+        num = 29
+        self.mesh = Mesh1DUniform(0, 10, num=num + 1)
+        start = 100 * self.mesh.physical_step
+        for i in range(1, 20):
+            other = Mesh1DUniform(start, start + 10, num=2 * num + 1)
+            self.assertTrue(self.mesh.is_aligned_with(other))
+            num = other.num - 1
+            start += other.physical_step * 7
+        # check AssertionError
+        with self.assertRaises(AssertionError):
+            self.mesh.is_aligned_with(1)
