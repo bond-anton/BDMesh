@@ -149,6 +149,9 @@ class TestMesh1DUniform(unittest.TestCase):
         # check if aligned with integer node mesh
         other = Mesh1DUniform(100, 110, physical_step=1.0)
         self.assertTrue(self.mesh.is_aligned_with(other))
+        # check if aligned with half-step node mesh
+        other = Mesh1DUniform(100, 110, physical_step=0.5)
+        self.assertTrue(self.mesh.is_aligned_with(other))
         # check if aligned with floating point step mesh
         num = 29
         self.mesh = Mesh1DUniform(0, 10, num=num + 1)
@@ -161,3 +164,11 @@ class TestMesh1DUniform(unittest.TestCase):
         # check AssertionError
         with self.assertRaises(AssertionError):
             self.mesh.is_aligned_with(1)
+        # check if aligned with mesh of same step but shifted by some offset value
+        offset = 0.33
+        other = Mesh1DUniform(100 + offset, 110 + offset, physical_step=1.0)
+        self.assertFalse(self.mesh.is_aligned_with(other))
+        # check if aligned with mesh of non-integer step coefficient
+        coeff = 1.33
+        other = Mesh1DUniform(100, 110, physical_step=1.0 * coeff)
+        self.assertFalse(self.mesh.is_aligned_with(other))

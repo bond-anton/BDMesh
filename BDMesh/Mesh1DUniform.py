@@ -153,7 +153,6 @@ class Mesh1DUniform(Mesh1D):
                 return True
             return False
         else:
-            print(abs(m.floor(step_ratio) - step_ratio))
             return False
 
     def merge_with(self, mesh):
