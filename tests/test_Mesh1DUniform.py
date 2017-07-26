@@ -47,7 +47,6 @@ class TestMesh1DUniform(unittest.TestCase):
         self.mesh.physical_step = -1.0
         self.assertEqual(self.mesh.physical_step, 1.0)
 
-
     def test_local_step(self):
         self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
         self.assertEqual(self.mesh.local_step, 0.1)
@@ -67,3 +66,25 @@ class TestMesh1DUniform(unittest.TestCase):
         self.assertEqual(self.mesh.local_step, 1)
         self.mesh.local_step = -0.5
         self.assertEqual(self.mesh.local_step, 0.5)
+
+    def test_num(self):
+        self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
+        self.assertEqual(self.mesh.num, 11)
+        self.mesh.num = 12
+        self.assertEqual(self.mesh.num, 12)
+        with self.assertRaises(ValueError):
+            self.mesh.num = 1e-5
+        with self.assertRaises(ValueError):
+            self.mesh.num = 1
+        with self.assertRaises(ValueError):
+            self.mesh.num = 'a'
+        self.mesh.num = None
+        self.assertEqual(self.mesh.num, 2)
+        self.mesh.num = 2 + 1e-11
+        self.assertEqual(self.mesh.num, 2)
+        self.mesh.num = 2
+        self.assertEqual(self.mesh.num, 2)
+        with self.assertRaises(ValueError):
+            self.mesh.num = -1
+        with self.assertRaises(ValueError):
+            self.mesh.num = -2

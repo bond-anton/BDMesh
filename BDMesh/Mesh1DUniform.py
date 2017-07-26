@@ -67,8 +67,14 @@ class Mesh1DUniform(Mesh1D):
 
     @num.setter
     def num(self, num):
-        if num is None or not check_if_integer(num):
+        if num is None:
             num_points = 2
+        elif not isinstance(num, Number):
+            raise ValueError('number of nodes must be integer')
+        elif not check_if_integer(num):
+            raise ValueError('number of nodes must be integer')
+        elif int(num) < 2:
+            raise ValueError('number of nodes must be greater or equal to two')
         else:
             num_points = int(num)
         self.local_nodes = np.linspace(0.0, 1.0, num=num_points, endpoint=True)
