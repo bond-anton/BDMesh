@@ -110,10 +110,10 @@ class Mesh1DUniform(Mesh1D):
             if len(crop) != 2:
                 raise ValueError('crop must be iterable of size 2')
             else:
-                if check_if_integer(crop[0]) and check_if_integer(crop[1]):
-                    self.__crop = np.array([int(crop[0]), int(crop[1])], dtype=np.int)
-                else:
-                    raise ValueError('crop must be two integers')
+                crop = np.array(crop).astype(np.int)
+                if (crop < 0).any():
+                    raise ValueError('crop positions must be greater than zero')
+                self.__crop = crop
 
     def trim(self, debug=False):
         if debug:
