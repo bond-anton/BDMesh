@@ -42,11 +42,11 @@ class TreeMesh1D(object):
         self.cleanup()
 
     def get_mesh_level(self, mesh):
+        assert isinstance(mesh, Mesh1D)
         for level in self.tree.keys():
             for tree_mesh in self.tree[level]:
                 if tree_mesh == mesh:
                     return level
-        print('mesh not found in a tree')
         return -1
 
     def get_children(self, mesh):

@@ -45,9 +45,16 @@ class TestTreeMesh1D(unittest.TestCase):
         self.assertEqual(self.tree.levels, [0, 1, 5])
         self.assertEqual(mesh1.physical_boundary_1, 1)
         self.assertEqual(mesh1.physical_boundary_2, 17)
+        # testing exceptions
         with self.assertRaises(ValueError):
             self.tree.add_mesh(mesh=mesh1, level=1.5)
         with self.assertRaises(AssertionError):
             self.tree.add_mesh(mesh=mesh1, level='1')
         with self.assertRaises(AssertionError):
             self.tree.add_mesh(mesh='a', level=1)
+        # test mesh level search
+        self.assertEqual(self.tree.get_mesh_level(self.root_mesh), 0)
+        self.assertEqual(self.tree.get_mesh_level(mesh1), 1)
+        self.assertEqual(self.tree.get_mesh_level(mesh4), -1)
+        with self.assertRaises(AssertionError):
+            self.tree.get_mesh_level(2)
