@@ -149,7 +149,6 @@ class Mesh1DUniform(Mesh1D):
         if check_if_integer(step_ratio, 1e-8):
             shift = abs(self.physical_boundary_1 - mesh.physical_boundary_1) / min_step
             if check_if_integer(shift, 1e-8):
-                print('done')
                 return True
             return False
         else:
