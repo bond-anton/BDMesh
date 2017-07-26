@@ -1,4 +1,5 @@
 from __future__ import division, print_function
+from copy import deepcopy
 import numpy as np
 from numbers import Number
 
@@ -50,6 +51,23 @@ class Mesh1D(object):
                     if np.allclose(self.local_nodes, other.local_nodes):
                         return True
         return False
+
+    def __copy__(self):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        result.__dict__.update(self.__dict__)
+        return result
+
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, deepcopy(v, memo))
+        return result
+
+    def copy(self):
+        return deepcopy(self)
 
     @property
     def physical_boundary_1(self):
@@ -219,7 +237,20 @@ class Mesh1D(object):
     def merge_with(self, mesh):
         assert isinstance(mesh, Mesh1D)
         if self.overlap_with(mesh):
-            merged_physical_nodes = np.unique(np.concatenate((self.physical_nodes, mesh.physical_nodes)).round(12))
+            tmp_mesh_1 = self.copy()
+            tmp_mesh_2 = mesh.copy()
+            merged_physical_nodes, indices = np.unique(np.concatenate((tmp_mesh_1.physical_nodes,
+                                                                       tmp_mesh_2.physical_nodes)).round(12),
+                                                       return_index=True)
+            idx_1 = indices[np.where(indices < tmp_mesh_1.num)]
+            idx_2 = indices[np.where(indices >= tmp_mesh_1.num)] - tmp_mesh_1.num
+            solution = np.zeros(merged_physical_nodes.size)
+            solution[np.where(indices < tmp_mesh_1.num)] = tmp_mesh_1.solution[idx_1]
+            solution[np.where(indices >= tmp_mesh_1.num)] = tmp_mesh_2.solution[idx_2]
+            residual = np.zeros(merged_physical_nodes.size)
+            residual[np.where(indices < tmp_mesh_1.num)] = tmp_mesh_1.residual[idx_1]
+            residual[np.where(indices >= tmp_mesh_1.num)] = tmp_mesh_2.residual[idx_2]
+
             if self.physical_boundary_1 > mesh.physical_boundary_1:
                 self.boundary_condition_1 = mesh.boundary_condition_1
                 self.physical_boundary_1 = mesh.physical_boundary_1
@@ -227,8 +258,7 @@ class Mesh1D(object):
                 self.boundary_condition_2 = mesh.boundary_condition_2
                 self.physical_boundary_2 = mesh.physical_boundary_2
             self.local_nodes = np.concatenate(([0.0], self.to_local_coordinate(merged_physical_nodes[1:-1]), [1.0]))
-            # TODO: solution/residual merging
-            self.solution = np.zeros(self.num)
-            self.residual = np.zeros(self.num)
+            self.solution = solution
+            self.residual = residual
 
     # TODO: add/remove nodes routines

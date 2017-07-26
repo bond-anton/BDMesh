@@ -153,10 +153,10 @@ class TestMesh1DUniform(unittest.TestCase):
         other = Mesh1DUniform(100, 110, physical_step=0.5)
         self.assertTrue(self.mesh.is_aligned_with(other))
         # check if aligned with floating point step mesh
-        num = 29
+        num = 899
         self.mesh = Mesh1DUniform(0, 10, num=num + 1)
         start = 100 * self.mesh.physical_step
-        for i in range(1, 20):
+        for i in range(1, 10):
             other = Mesh1DUniform(start, start + 10, num=2 * num + 1)
             self.assertTrue(self.mesh.is_aligned_with(other))
             num = other.num - 1
@@ -173,3 +173,33 @@ class TestMesh1DUniform(unittest.TestCase):
         coeff = 1.33
         other = Mesh1DUniform(100, 110, physical_step=1.0 * coeff)
         self.assertFalse(self.mesh.is_aligned_with(other))
+
+    def test_merge(self):
+        # check merging with equal mesh
+        self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
+        other = Mesh1DUniform(0, 10, physical_step=1.0)
+        self.mesh.merge_with(other)
+        self.assertEqual(self.mesh, other)
+        # check mearging with floating point step mesh
+        self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
+        num = self.mesh.num - 1
+        start = 2
+        for i in range(1, 10):
+            other = Mesh1DUniform(start, start + 10, num=4 * num + 1)
+            self.mesh.merge_with(other)
+            merged = Mesh1DUniform(0, start + 10, physical_step=other.physical_step)
+            self.assertEqual(self.mesh, merged)
+            num = other.num - 1
+            start += other.physical_step
+            self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
+        # check merging with not overlapping mesh
+        self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
+        with self.assertRaises(ValueError):
+            self.mesh.merge_with(Mesh1DUniform(11, 21, physical_step=1.0))
+        # check merging with not aligned mesh
+        self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
+        with self.assertRaises(ValueError):
+            self.mesh.merge_with(Mesh1DUniform(5, 15, physical_step=0.6))
+        # check AssertionError
+        with self.assertRaises(AssertionError):
+            self.mesh.merge_with(1)

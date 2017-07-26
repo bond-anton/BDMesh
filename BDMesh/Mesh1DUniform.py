@@ -1,5 +1,4 @@
 from __future__ import division, print_function
-import math as m
 import numpy as np
 from numbers import Number
 
@@ -156,8 +155,24 @@ class Mesh1DUniform(Mesh1D):
 
     def merge_with(self, mesh):
         assert isinstance(mesh, Mesh1DUniform)
-        if self.overlap_with(mesh) and abs(self.physical_step - mesh.physical_step) < 0.1 * self.physical_step:
+        if self.overlap_with(mesh):
             if self.is_aligned_with(mesh):
+                tmp_mesh_1 = self.copy()
+                tmp_mesh_2 = mesh.copy()
+                tmp_mesh_1.physical_step = self.physical_step
+                tmp_mesh_2.physical_step = self.physical_step
+                merged_physical_nodes, indices = np.unique(np.concatenate((tmp_mesh_1.physical_nodes,
+                                                                           tmp_mesh_2.physical_nodes)).round(12),
+                                                           return_index=True)
+                idx_1 = indices[np.where(indices < tmp_mesh_1.num)]
+                idx_2 = indices[np.where(indices >= tmp_mesh_1.num)] - tmp_mesh_1.num
+                solution = np.zeros(merged_physical_nodes.size)
+                solution[np.where(indices < tmp_mesh_1.num)] = tmp_mesh_1.solution[idx_1]
+                solution[np.where(indices >= tmp_mesh_1.num)] = tmp_mesh_2.solution[idx_2]
+                residual = np.zeros(merged_physical_nodes.size)
+                residual[np.where(indices < tmp_mesh_1.num)] = tmp_mesh_1.residual[idx_1]
+                residual[np.where(indices >= tmp_mesh_1.num)] = tmp_mesh_2.residual[idx_2]
+
                 if self.physical_boundary_1 > mesh.physical_boundary_1:
                     self.boundary_condition_1 = mesh.boundary_condition_1
                     self.crop[0] = mesh.crop[0]
@@ -167,11 +182,9 @@ class Mesh1DUniform(Mesh1D):
                     self.crop[1] = mesh.crop[1]
                     self.physical_boundary_2 = mesh.physical_boundary_2
                 self.physical_step = min(self.physical_step, mesh.physical_step)
-                # TODO: solution/residual merging
-                self.solution = np.zeros(self.num)
-                self.residual = np.zeros(self.num)
+                self.solution = np.interp(self.physical_nodes, merged_physical_nodes, solution)
+                self.residual = np.interp(self.physical_nodes, merged_physical_nodes, residual)
             else:
-                print('meshes are not aligned and could not be merged')
+                raise ValueError('meshes are not aligned')
         else:
-            print(abs(self.physical_step - mesh.physical_step), self.physical_step)
-            print('meshes do not overlap or have different step size')
+            raise ValueError('meshes do not overlap')
