@@ -2,7 +2,7 @@ from __future__ import division, print_function
 import numpy as np
 import unittest
 
-from BDMesh import Mesh1DUniform, TreeMesh1DUniform
+from BDMesh import Mesh1DUniform, TreeMesh1DUniform, Mesh1D
 
 
 class TestTreeMesh1DUniform(unittest.TestCase):
@@ -108,3 +108,20 @@ class TestTreeMesh1DUniform(unittest.TestCase):
         self.assertEqual(self.tree.tree, {0: [Mesh1DUniform(4, 7, physical_step=1.0)],
                                           1: [Mesh1DUniform(4, 7, physical_step=0.5)],
                                           2: [Mesh1DUniform(4, 7, physical_step=0.25)]})
+
+    def test_flatten(self):
+        mesh = Mesh1DUniform(1, 4, physical_step=0.5)
+        self.tree.add_mesh(mesh=mesh)
+        self.assertEqual(self.tree.tree, {0: [self.root_mesh], 1: [mesh]})
+        mesh1 = Mesh1DUniform(2, 3, physical_step=0.25)
+        self.tree.add_mesh(mesh=mesh1)
+        self.assertEqual(self.tree.tree, {0: [self.root_mesh], 1: [mesh], 2: [mesh1]})
+        self.tree.trim()
+        self.assertEqual(self.tree.tree, {0: [self.root_mesh], 1: [mesh], 2: [mesh1]})
+        mesh2 = Mesh1DUniform(9, 10, physical_step=0.5)
+        self.tree.add_mesh(mesh=mesh2)
+        flattened = self.tree.flatten()
+        self.assertTrue(isinstance(flattened, Mesh1D))
+        flat_grid = np.array([0.0, 1.0, 1.5, 2.0, 2.25, 2.5, 2.75, 3.0, 3.5, 4.0, 5.0,
+                              6.0, 7.0, 8.0, 9.0, 9.5, 10.0])
+        np.testing.assert_allclose(flattened.physical_nodes, flat_grid)

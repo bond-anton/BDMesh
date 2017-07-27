@@ -2,7 +2,7 @@ from __future__ import division, print_function
 import math as m
 import numpy as np
 
-from BDMesh import TreeMesh1D, Mesh1DUniform
+from BDMesh import TreeMesh1D, Mesh1DUniform, Mesh1D
 from ._helpers import check_if_integer
 
 
@@ -113,20 +113,12 @@ class TreeMesh1DUniform(TreeMesh1D):
                 trimmed = True
         self.crop = [0, 0]
 
-    def flatten(self, debug=False):
+    def flatten(self):
         flat_grid = self.root_mesh.physical_nodes
         flat_sol = self.root_mesh.solution
         flat_res = self.root_mesh.residual
-        if debug:
-            print('root_mesh is from', flat_grid[0], 'to', flat_grid[-1])
         for level in self.levels[1:]:
-            if debug:
-                print('working with level', level)
             for mesh in self.tree[level]:
-                if debug:
-                    print('flat_grid is from', flat_grid[0], 'to', flat_grid[-1])
-                    print('merging mesh from', mesh.physical_boundary_1,)
-                    print('to', mesh.physical_boundary_2, mesh.physical_step)
                 ins_idx1 = np.where(flat_grid <= mesh.physical_boundary_1 + mesh.physical_step / 10)[0][-1]
                 ins_idx2 = np.where(flat_grid >= mesh.physical_boundary_2 - mesh.physical_step / 10)[0][0]
                 if ins_idx2 == flat_grid.size:
@@ -144,6 +136,9 @@ class TreeMesh1DUniform(TreeMesh1D):
                         flat_grid = np.hstack((flat_grid[0:ins_idx1], mesh.physical_nodes, flat_grid[ins_idx2:]))
                         flat_sol = np.hstack((flat_sol[0:ins_idx1], mesh.solution, flat_sol[ins_idx2:]))
                         flat_res = np.hstack((flat_res[0:ins_idx1], mesh.residual, flat_res[ins_idx2:]))
-                if debug:
-                    print('flat_grid is from', flat_grid[0], 'to', flat_grid[-1])
-        return flat_grid, flat_sol, flat_res
+        flattened_mesh = Mesh1D(flat_grid[0], flat_grid[-1],
+                                boundary_condition_1=flat_sol[0], boundary_condition_2=flat_sol[-1])
+        flattened_mesh.local_nodes = flattened_mesh.to_local_coordinate(flat_grid)
+        flattened_mesh.solution = flat_sol
+        flattened_mesh.residual = flat_res
+        return flattened_mesh
