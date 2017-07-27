@@ -73,3 +73,26 @@ class TestTreeMesh1D(unittest.TestCase):
         # testing exceptions
         with self.assertRaises(AssertionError):
             self.tree.get_children(mesh='a')
+
+    def test_delete(self):
+        mesh = Mesh1D(1, 7)
+        self.tree.add_mesh(mesh=mesh, level=1)
+        self.tree.add_mesh(mesh=Mesh1D(1, 6), level=2)
+        self.tree.add_mesh(mesh=Mesh1D(2, 3), level=3)
+        self.tree.add_mesh(mesh=Mesh1D(4, 5), level=3)
+        children = self.tree.get_children(mesh)
+        self.assertEqual(children, {2: [Mesh1D(1, 6)], 3: [Mesh1D(2, 3), Mesh1D(4, 5)]})
+        self.tree.del_mesh(Mesh1D(4, 5))
+        children = self.tree.get_children(mesh)
+        self.assertEqual(children, {2: [Mesh1D(1, 6)], 3: [Mesh1D(2, 3)]})
+        self.tree.add_mesh(mesh=Mesh1D(4, 5), level=3)
+        children = self.tree.get_children(mesh)
+        self.assertEqual(children, {2: [Mesh1D(1, 6)], 3: [Mesh1D(2, 3), Mesh1D(4, 5)]})
+        self.tree.del_mesh(Mesh1D(1, 6))
+        self.assertEqual(self.tree.tree, {0: [self.root_mesh], 1: [Mesh1D(1, 7)]})
+        # check if exceptions are raised
+        with self.assertRaises(ValueError):
+            self.tree.del_mesh(self.root_mesh)
+        with self.assertRaises(ValueError):
+            self.tree.del_mesh(Mesh1D(100, 110))
+

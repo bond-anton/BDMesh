@@ -63,24 +63,21 @@ class TreeMesh1D(object):
                         children[upper_level] = [tree_mesh]
         return children
 
-    def del_mesh(self, mesh, del_children=True):
+    def del_mesh(self, mesh):
         level = self.get_mesh_level(mesh)
         if level > 0:
             children = self.get_children(mesh)
             if children == {}:
                 self.tree[level].remove(mesh)
-            elif del_children:
-                for child_level in sorted(children.keys(), reverse=True):
-                    print('deleting children at level', child_level)
-                    for child in children[child_level]:
-                        self.del_mesh(child, del_children=False)
-                self.del_mesh(mesh, del_children=False)
             else:
-                print('mesh has children, use del_children=True flag')
+                for child_level in sorted(children.keys(), reverse=True):
+                    for child in children[child_level]:
+                        self.del_mesh(child)
+                self.del_mesh(mesh)
         elif level == 0:
-            print('Can not delete root mesh')
+            raise ValueError('Can not delete root mesh')
         else:
-            print('mesh not found in a tree')
+            raise ValueError('Mesh not found in a tree')
         self.cleanup()
 
     def cleanup(self):
