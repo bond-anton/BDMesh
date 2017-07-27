@@ -71,9 +71,9 @@ class TestTreeMesh1DUniform(unittest.TestCase):
         self.assertEqual(self.tree.tree, {0: [self.root_mesh], 1: [mesh], 2: [mesh1]})
         # testing exceptions
         with self.assertRaises(ValueError):
-            self.tree.add_mesh(mesh=Mesh1DUniform(1.3, 8, physical_step=0.5))
+            self.tree.add_mesh(mesh=Mesh1DUniform(1.3, 8.3, physical_step=0.5))
         with self.assertRaises(ValueError):
-            self.tree.add_mesh(mesh=Mesh1DUniform(1.3, 8, physical_step=0.33))
+            self.tree.add_mesh(mesh=Mesh1DUniform(1, 8, physical_step=0.33))
         with self.assertRaises(AssertionError):
             self.tree.add_mesh(mesh='a', level=1)
 
