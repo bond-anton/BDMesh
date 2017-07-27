@@ -20,10 +20,10 @@ class TreeMesh1DUniform(TreeMesh1D):
         :param crop: iterable of two integers specifying number of root_mesh nodes to crop from both side of meshes tree
         """
         assert isinstance(root_mesh, Mesh1DUniform)
+        super(TreeMesh1DUniform, self).__init__(root_mesh)
         self.__refinement_coefficient = None
         self.__aligned = None
         self.__crop = None
-        super(TreeMesh1DUniform, self).__init__(root_mesh)
         self.refinement_coefficient = refinement_coefficient
         self.aligned = aligned
         self.crop = crop
@@ -35,7 +35,11 @@ class TreeMesh1DUniform(TreeMesh1D):
     @refinement_coefficient.setter
     def refinement_coefficient(self, refinement_coefficient):
         assert isinstance(refinement_coefficient, (float, int))
-        self.__refinement_coefficient = refinement_coefficient
+        # TODO: recalculate all meshes if refinement coefficient changed. For now just forbid to change.
+        if self.refinement_coefficient is None:
+            self.__refinement_coefficient = refinement_coefficient
+        else:
+            raise NotImplementedError('Change of refinement coefficient is not implemented yet.')
 
     @property
     def aligned(self):
@@ -44,7 +48,11 @@ class TreeMesh1DUniform(TreeMesh1D):
     @aligned.setter
     def aligned(self, aligned):
         assert isinstance(aligned, bool)
-        self.__aligned = aligned
+        # TODO: if True, add check whether meshes are actually aligned. For now forbid to change to True
+        if self.aligned is None or aligned == False:
+            self.__aligned = aligned
+        else:
+            raise NotImplementedError('Change of aligned flag to True is not implemented yet.')
 
     @property
     def crop(self):
@@ -62,10 +70,12 @@ class TreeMesh1DUniform(TreeMesh1D):
             if len(crop) != 2:
                 raise ValueError('crop must be iterable of size 2')
             else:
-                if check_if_integer(crop[0]) and check_if_integer(crop[1]):
-                    self.__crop = np.array([int(crop[0]), int(crop[1])], dtype=np.int)
-                else:
-                    raise ValueError('crop must be two integers')
+                crop = np.array(crop).astype(np.int)
+                if np.sum(crop) > self.root_mesh.num - 2:
+                    raise ValueError('At least two nodes must remain after trimming')
+                if (crop < 0).any():
+                    raise ValueError('crop positions must be greater than zero')
+                self.__crop = np.array([int(crop[0]), int(crop[1])], dtype=np.int)
 
     def add_mesh(self, mesh, **kwargs):
         assert isinstance(mesh, Mesh1DUniform)
