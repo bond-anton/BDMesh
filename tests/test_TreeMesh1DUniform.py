@@ -1,6 +1,4 @@
 from __future__ import division, print_function
-from copy import copy, deepcopy
-import math as m
 import numpy as np
 import unittest
 
@@ -70,7 +68,7 @@ class TestTreeMesh1DUniform(unittest.TestCase):
         self.assertEqual(self.tree.tree, {0: [self.root_mesh], 1: [mesh]})
         mesh1 = Mesh1DUniform(2, 10, physical_step=0.25)
         self.tree.add_mesh(mesh=mesh1)
-        self.assertEqual(self.tree.tree, {0: [self.root_mesh], 1: [mesh], 2:[mesh1]})
+        self.assertEqual(self.tree.tree, {0: [self.root_mesh], 1: [mesh], 2: [mesh1]})
         # testing exceptions
         with self.assertRaises(ValueError):
             self.tree.add_mesh(mesh=Mesh1DUniform(1.3, 8, physical_step=0.5))
@@ -78,3 +76,35 @@ class TestTreeMesh1DUniform(unittest.TestCase):
             self.tree.add_mesh(mesh=Mesh1DUniform(1.3, 8, physical_step=0.33))
         with self.assertRaises(AssertionError):
             self.tree.add_mesh(mesh='a', level=1)
+
+    def test_trim(self):
+        mesh = Mesh1DUniform(1, 8, physical_step=0.5)
+        self.tree.add_mesh(mesh=mesh)
+        self.assertEqual(self.tree.tree, {0: [self.root_mesh], 1: [mesh]})
+        mesh1 = Mesh1DUniform(2, 10, physical_step=0.25)
+        self.tree.add_mesh(mesh=mesh1)
+        self.assertEqual(self.tree.tree, {0: [self.root_mesh], 1: [mesh], 2: [mesh1]})
+        self.tree.trim()
+        self.assertEqual(self.tree.tree, {0: [self.root_mesh], 1: [mesh], 2: [mesh1]})
+        self.tree.crop = [2, 2]
+        self.tree.trim()
+        self.assertEqual(self.tree.tree, {0: [Mesh1DUniform(2, 8, physical_step=1.0)],
+                                          1: [Mesh1DUniform(2, 8, physical_step=0.5)],
+                                          2: [Mesh1DUniform(2, 8, physical_step=0.25)]})
+        self.tree.crop = [0, 1]
+        self.tree.trim()
+        self.assertEqual(self.tree.tree, {0: [Mesh1DUniform(2, 7, physical_step=1.0)],
+                                          1: [Mesh1DUniform(2, 7, physical_step=0.5)],
+                                          2: [Mesh1DUniform(2, 7, physical_step=0.25)]})
+        self.tree.crop = [1, 0]
+        self.tree.trim()
+        self.assertEqual(self.tree.tree, {0: [Mesh1DUniform(3, 7, physical_step=1.0)],
+                                          1: [Mesh1DUniform(3, 7, physical_step=0.5)],
+                                          2: [Mesh1DUniform(3, 7, physical_step=0.25)]})
+        mesh1 = Mesh1DUniform(3, 4, physical_step=0.125)
+        self.tree.add_mesh(mesh=mesh1)
+        self.tree.crop = [1, 0]
+        self.tree.trim()
+        self.assertEqual(self.tree.tree, {0: [Mesh1DUniform(4, 7, physical_step=1.0)],
+                                          1: [Mesh1DUniform(4, 7, physical_step=0.5)],
+                                          2: [Mesh1DUniform(4, 7, physical_step=0.25)]})

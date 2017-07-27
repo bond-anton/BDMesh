@@ -87,17 +87,13 @@ class TreeMesh1DUniform(TreeMesh1D):
             raise ValueError('all child meshes must be aligned with the root mesh')
         super(TreeMesh1DUniform, self).add_mesh(mesh, level)
 
-    def trim(self, debug=False):
-        if debug:
-            print('Cropping', np.sum(self.crop), 'elements (of root_mesh):', self.crop)
+    def trim(self):
         self.root_mesh.crop = self.crop
         self.root_mesh.trim()
         level = 1
         trimmed = True if level > self.levels[-1] else False
         while not trimmed:
-            if debug:
-                print('trimming level', level)
-            meshes_for_delete = []
+            meshes_for_deletion = []
             for mesh in self.tree[level]:
                 mesh.trim()
                 crop = [0, 0]
@@ -105,24 +101,13 @@ class TreeMesh1DUniform(TreeMesh1D):
                 right_offset = (mesh.physical_boundary_2 - self.root_mesh.physical_boundary_2) / mesh.physical_step
                 crop[0] = int(m.ceil(left_offset)) if left_offset > 0 else 0
                 crop[1] = int(m.ceil(right_offset)) if right_offset > 0 else 0
-                if crop[0] == 0 and crop[1] > 0:
-                    if crop[1] >= mesh.num:
-                        if debug:
-                            print('Deleting mesh')
-                        meshes_for_delete.append(mesh)
+                if crop[0] + crop[1] >= mesh.num - 2:
+                        meshes_for_deletion.append(mesh)
                         continue
-                elif crop[1] == 0 and crop[0] > 0:
-                    if crop[0] >= mesh.num:
-                        if debug:
-                            print('Deleting mesh')
-                        meshes_for_delete.append(mesh)
-                        continue
-                if debug:
-                    print('Cropping mesh by', crop)
                 mesh.crop = np.array(crop)
                 mesh.trim()
-            for mesh in meshes_for_delete:
-                self.del_mesh(mesh, del_children=True)
+            for mesh in meshes_for_deletion:
+                self.del_mesh(mesh)
             level += 1
             if level > self.levels[-1]:
                 trimmed = True

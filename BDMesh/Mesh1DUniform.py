@@ -117,8 +117,8 @@ class Mesh1DUniform(Mesh1D):
                 self.__crop = crop
 
     def trim(self):
-        solution = self.solution[self.crop[0]:-self.crop[1]]
-        residual = self.residual[self.crop[0]:-self.crop[1]]
+        solution = self.solution[self.crop[0]:self.num-self.crop[1]]
+        residual = self.residual[self.crop[0]:self.num-self.crop[1]]
         self.physical_boundary_1 += self.crop[0] * self.physical_step
         self.physical_boundary_2 -= self.crop[1] * self.physical_step
         num_points = int(np.ceil(self.num - np.sum(self.crop)))
