@@ -95,4 +95,19 @@ class TestTreeMesh1D(unittest.TestCase):
             self.tree.del_mesh(self.root_mesh)
         with self.assertRaises(ValueError):
             self.tree.del_mesh(Mesh1D(100, 110))
+        with self.assertRaises(AssertionError):
+            self.tree.del_mesh(1)
 
+    def test_remove_coarse_duplicates(self):
+        mesh = Mesh1D(1, 9)
+        self.tree.add_mesh(mesh=mesh, level=1)
+        self.tree.add_mesh(mesh=Mesh1D(1, 7), level=2)
+        self.tree.add_mesh(mesh=Mesh1D(1, 7), level=3)
+        self.tree.add_mesh(mesh=Mesh1D(8, 9), level=3)
+        children = self.tree.get_children(mesh)
+        self.assertEqual(children, {2: [Mesh1D(1, 7)], 3: [Mesh1D(1, 7), Mesh1D(8, 9)]})
+        self.tree.remove_coarse_duplicates()
+        children = self.tree.get_children(mesh)
+        print(self.tree.tree)
+        self.assertEqual(children, {3: [Mesh1D(1, 7), Mesh1D(8, 9)]})
+        self.assertEqual(self.tree.tree, {0: [self.root_mesh], 1: [mesh], 3: [Mesh1D(1, 7), Mesh1D(8, 9)]})

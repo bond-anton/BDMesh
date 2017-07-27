@@ -86,27 +86,27 @@ class TreeMesh1D(object):
         self.recalculate_levels()
 
     def remove_coarse_duplicates(self):
-        for level in self.tree.keys():
+        for level in self.levels:
             for mesh in self.tree[level]:
-                upper_levels = np.array(self.tree.keys())
+                upper_levels = np.array(self.levels)
                 upper_levels = upper_levels[np.where(upper_levels > level)]
                 for upper_level in upper_levels:
                     for tree_mesh in self.tree[upper_level]:
                         if mesh.is_inside_of(tree_mesh):
                             self.tree[level].remove(mesh)
-                            print('mesh overlaps with coarse mesh. DELETING COARSE.')
+        self.recalculate_levels()
 
     def recalculate_levels(self):
         tidy = False
         while not tidy:
-            for level in self.tree.keys():
+            for level in self.levels:
                 if not self.tree[level]:
                     self.tree.pop(level)
                     break
             tidy = True
-        offset = min(self.tree.keys())
+        offset = min(self.levels)
         if offset != 0:
-            for level in self.tree.keys():
+            for level in self.levels:
                 self.tree[level - offset] = self.tree.pop(level)
 
     def merge_overlaps(self):
