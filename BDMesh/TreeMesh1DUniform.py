@@ -114,31 +114,14 @@ class TreeMesh1DUniform(TreeMesh1D):
         self.crop = [0, 0]
 
     def flatten(self):
-        flat_grid = self.root_mesh.physical_nodes
-        flat_sol = self.root_mesh.solution
-        flat_res = self.root_mesh.residual
+        flattened_mesh = Mesh1D(self.root_mesh.physical_boundary_1, self.root_mesh.physical_boundary_2,
+                                boundary_condition_1=self.root_mesh.boundary_condition_1,
+                                boundary_condition_2=self.root_mesh.boundary_condition_2)
+        flattened_mesh.local_nodes = self.root_mesh.local_nodes
+        flattened_mesh.solution = self.root_mesh.solution
+        flattened_mesh.residual = self.root_mesh.solution
+
         for level in self.levels[1:]:
             for mesh in self.tree[level]:
-                ins_idx1 = np.where(flat_grid <= mesh.physical_boundary_1 + mesh.physical_step / 10)[0][-1]
-                ins_idx2 = np.where(flat_grid >= mesh.physical_boundary_2 - mesh.physical_step / 10)[0][0]
-                if ins_idx2 == flat_grid.size:
-                    flat_grid = np.hstack((flat_grid[0:ins_idx1], mesh.physical_nodes))
-                    flat_sol = np.hstack((flat_sol[0:ins_idx1], mesh.solution))
-                    flat_res = np.hstack((flat_res[0:ins_idx1], mesh.residual))
-                else:
-                    if ins_idx2 < flat_grid.size - 1:
-                        ins_idx2 += 1
-                    if len(flat_grid[ins_idx2:]) == 1 and flat_grid[ins_idx2] == mesh.physical_nodes[-1]:
-                        flat_grid = np.hstack((flat_grid[0:ins_idx1], mesh.physical_nodes))
-                        flat_sol = np.hstack((flat_sol[0:ins_idx1], mesh.solution))
-                        flat_res = np.hstack((flat_res[0:ins_idx1], mesh.residual))
-                    else:
-                        flat_grid = np.hstack((flat_grid[0:ins_idx1], mesh.physical_nodes, flat_grid[ins_idx2:]))
-                        flat_sol = np.hstack((flat_sol[0:ins_idx1], mesh.solution, flat_sol[ins_idx2:]))
-                        flat_res = np.hstack((flat_res[0:ins_idx1], mesh.residual, flat_res[ins_idx2:]))
-        flattened_mesh = Mesh1D(flat_grid[0], flat_grid[-1],
-                                boundary_condition_1=flat_sol[0], boundary_condition_2=flat_sol[-1])
-        flattened_mesh.local_nodes = flattened_mesh.to_local_coordinate(flat_grid)
-        flattened_mesh.solution = flat_sol
-        flattened_mesh.residual = flat_res
+                flattened_mesh.merge_with(mesh)
         return flattened_mesh

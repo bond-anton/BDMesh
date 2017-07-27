@@ -108,6 +108,5 @@ class TestTreeMesh1D(unittest.TestCase):
         self.assertEqual(children, {2: [Mesh1D(1, 7)], 3: [Mesh1D(1, 7), Mesh1D(8, 9)]})
         self.tree.remove_coarse_duplicates()
         children = self.tree.get_children(mesh)
-        print(self.tree.tree)
         self.assertEqual(children, {3: [Mesh1D(1, 7), Mesh1D(8, 9)]})
         self.assertEqual(self.tree.tree, {0: [self.root_mesh], 1: [mesh], 3: [Mesh1D(1, 7), Mesh1D(8, 9)]})
