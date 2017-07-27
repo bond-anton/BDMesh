@@ -52,7 +52,7 @@ class TreeMesh1D(object):
     def get_children(self, mesh):
         children = {}
         level = self.get_mesh_level(mesh)
-        upper_levels = np.array(self.tree.keys())
+        upper_levels = np.array(self.levels)
         upper_levels = upper_levels[np.where(upper_levels > level)]
         for upper_level in upper_levels:
             for tree_mesh in self.tree[upper_level]:

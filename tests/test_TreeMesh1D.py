@@ -58,3 +58,18 @@ class TestTreeMesh1D(unittest.TestCase):
         self.assertEqual(self.tree.get_mesh_level(mesh4), -1)
         with self.assertRaises(AssertionError):
             self.tree.get_mesh_level(2)
+
+    def test_get_children(self):
+        mesh = Mesh1D(1, 7)
+        self.tree.add_mesh(mesh=mesh, level=1)
+        self.tree.add_mesh(mesh=Mesh1D(1, 6), level=2)
+        self.tree.add_mesh(mesh=Mesh1D(2, 3), level=3)
+        self.tree.add_mesh(mesh=Mesh1D(4, 5), level=3)
+        children = self.tree.get_children(mesh)
+        self.assertEqual(children, {2: [Mesh1D(1, 6)], 3: [Mesh1D(2, 3), Mesh1D(4, 5)]})
+        self.tree.add_mesh(mesh=Mesh1D(4.5, 7.5), level=3)
+        children = self.tree.get_children(mesh)
+        self.assertEqual(children, {2: [Mesh1D(1, 6)], 3: [Mesh1D(2, 3)]})
+        # testing exceptions
+        with self.assertRaises(AssertionError):
+            self.tree.get_children(mesh='a')
