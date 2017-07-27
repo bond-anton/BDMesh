@@ -126,3 +126,16 @@ class TreeMesh1D(object):
                                 break
                     if overlap_found:
                         break
+
+    def flatten(self):
+        flattened_mesh = Mesh1D(self.root_mesh.physical_boundary_1, self.root_mesh.physical_boundary_2,
+                                boundary_condition_1=self.root_mesh.boundary_condition_1,
+                                boundary_condition_2=self.root_mesh.boundary_condition_2)
+        flattened_mesh.local_nodes = self.root_mesh.local_nodes
+        flattened_mesh.solution = self.root_mesh.solution
+        flattened_mesh.residual = self.root_mesh.solution
+
+        for level in self.levels[1:]:
+            for mesh in self.tree[level]:
+                flattened_mesh.merge_with(mesh)
+        return flattened_mesh

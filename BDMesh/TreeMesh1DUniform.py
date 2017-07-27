@@ -2,7 +2,7 @@ from __future__ import division, print_function
 import math as m
 import numpy as np
 
-from BDMesh import TreeMesh1D, Mesh1DUniform, Mesh1D
+from BDMesh import TreeMesh1D, Mesh1DUniform
 from ._helpers import check_if_integer
 
 
@@ -49,7 +49,7 @@ class TreeMesh1DUniform(TreeMesh1D):
     def aligned(self, aligned):
         assert isinstance(aligned, bool)
         # TODO: if True, add check whether meshes are actually aligned. For now forbid to change to True
-        if self.aligned is None or aligned == False:
+        if self.aligned is None or not aligned:
             self.__aligned = aligned
         else:
             raise NotImplementedError('Change of aligned flag to True is not implemented yet.')
@@ -112,16 +112,3 @@ class TreeMesh1DUniform(TreeMesh1D):
             if level > self.levels[-1]:
                 trimmed = True
         self.crop = [0, 0]
-
-    def flatten(self):
-        flattened_mesh = Mesh1D(self.root_mesh.physical_boundary_1, self.root_mesh.physical_boundary_2,
-                                boundary_condition_1=self.root_mesh.boundary_condition_1,
-                                boundary_condition_2=self.root_mesh.boundary_condition_2)
-        flattened_mesh.local_nodes = self.root_mesh.local_nodes
-        flattened_mesh.solution = self.root_mesh.solution
-        flattened_mesh.residual = self.root_mesh.solution
-
-        for level in self.levels[1:]:
-            for mesh in self.tree[level]:
-                flattened_mesh.merge_with(mesh)
-        return flattened_mesh

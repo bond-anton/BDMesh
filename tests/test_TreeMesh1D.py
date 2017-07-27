@@ -1,6 +1,4 @@
 from __future__ import division, print_function
-from copy import copy, deepcopy
-import math as m
 import numpy as np
 import unittest
 
@@ -32,7 +30,7 @@ class TestTreeMesh1D(unittest.TestCase):
         self.assertEqual(self.tree.levels, [0, 1])
         mesh3 = Mesh1D(6, 9)
         self.tree.add_mesh(mesh=mesh3, level=5)
-        self.assertEqual(self.tree.tree, {0: [self.root_mesh], 1: [mesh1, mesh2], 5:[mesh3]})
+        self.assertEqual(self.tree.tree, {0: [self.root_mesh], 1: [mesh1, mesh2], 5: [mesh3]})
         self.assertEqual(self.tree.levels, [0, 1, 5])
         # adding overlapping meshes
         mesh4 = Mesh1D(12, 17)
@@ -110,3 +108,25 @@ class TestTreeMesh1D(unittest.TestCase):
         children = self.tree.get_children(mesh)
         self.assertEqual(children, {3: [Mesh1D(1, 7), Mesh1D(8, 9)]})
         self.assertEqual(self.tree.tree, {0: [self.root_mesh], 1: [mesh], 3: [Mesh1D(1, 7), Mesh1D(8, 9)]})
+
+    def test_flatten(self):
+        # adding not overlapping meshes
+        mesh1 = Mesh1D(5, 15)
+        self.tree.add_mesh(mesh=mesh1, level=1)
+        self.assertEqual(self.tree.tree, {0: [self.root_mesh], 1: [mesh1]})
+        self.assertEqual(self.tree.levels, [0, 1])
+        mesh2 = Mesh1D(1, 4)
+        self.tree.add_mesh(mesh=mesh2, level=1)
+        self.assertEqual(self.tree.tree, {0: [self.root_mesh], 1: [mesh1, mesh2]})
+        self.assertEqual(self.tree.levels, [0, 1])
+        mesh3 = Mesh1D(6, 9)
+        self.tree.add_mesh(mesh=mesh3, level=5)
+        self.assertEqual(self.tree.tree, {0: [self.root_mesh], 1: [mesh1, mesh2], 5: [mesh3]})
+        self.assertEqual(self.tree.levels, [0, 1, 5])
+        # adding overlapping meshes
+        mesh4 = Mesh1D(12, 17)
+        self.tree.add_mesh(mesh=mesh4, level=1)
+        flattened = self.tree.flatten()
+        self.assertTrue(isinstance(flattened, Mesh1D))
+        flat_grid = np.array([0.0, 1.0, 4.0, 5.0, 6.0, 9.0, 10.0, 12.0, 15.0, 17.0])
+        np.testing.assert_allclose(flattened.physical_nodes, flat_grid)
