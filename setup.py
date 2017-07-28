@@ -40,7 +40,7 @@ setup(
         'Intended Audience :: Education',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: Apache Software License',
-        'Topic :: Database',
+        'Topic :: Scientific/Engineering :: Mathematics',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
@@ -54,4 +54,5 @@ setup(
     packages=find_packages(exclude=['demo', 'tests', 'docs', 'contrib']),
     install_requires=['numpy'],
     test_suite='nose.collector',
+    tests_require=['nose']
 )
