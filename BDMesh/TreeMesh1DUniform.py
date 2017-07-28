@@ -52,7 +52,19 @@ class TreeMesh1DUniform(TreeMesh1D):
         if self.aligned is None or not aligned:
             self.__aligned = aligned
         else:
-            raise NotImplementedError('Change of aligned flag to True is not implemented yet.')
+            tree_is_aligned = True
+            parent = self.root_mesh
+            for level in self.levels[1:]:
+                for mesh in self.tree[level]:
+                    if not parent.is_aligned_with(mesh):
+                        tree_is_aligned = False
+                        break
+                if not tree_is_aligned:
+                    break
+            if not tree_is_aligned:
+                raise ValueError('Tree is not aligned and can not be set to aligned')
+            else:
+                self.__aligned = aligned
 
     @property
     def crop(self):

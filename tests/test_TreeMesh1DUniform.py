@@ -32,7 +32,12 @@ class TestTreeMesh1DUniform(unittest.TestCase):
         self.assertTrue(self.tree.aligned)
         self.tree.aligned = False
         self.assertFalse(self.tree.aligned)
-        with self.assertRaises(NotImplementedError):
+        self.tree.aligned = True
+        self.assertTrue(self.tree.aligned)
+        self.tree.aligned = False
+        self.assertFalse(self.tree.aligned)
+        self.tree.add_mesh(mesh=Mesh1DUniform(1.3, 8.3, physical_step=0.5))
+        with self.assertRaises(ValueError):
             self.tree.aligned = True
         self.assertFalse(self.tree.aligned)
         with self.assertRaises(AssertionError):
