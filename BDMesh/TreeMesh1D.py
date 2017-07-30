@@ -101,11 +101,9 @@ class TreeMesh1D(object):
         self.recalculate_levels()
 
     def recalculate_levels(self):
-        tidy = False
-        while not tidy:
-            for level in self.levels:
-                if not self.tree[level]:
-                    self.tree.pop(level)
+        for level in self.levels:
+            if not self.tree[level]:
+                self.tree.pop(level)
         offset = min(self.levels)
         if offset != 0:
             for level in self.levels:
