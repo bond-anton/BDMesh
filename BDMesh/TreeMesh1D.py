@@ -140,5 +140,5 @@ class TreeMesh1D(object):
 
         for level in self.levels[1:]:
             for mesh in self.tree[level]:
-                flattened_mesh.merge_with(mesh)
+                flattened_mesh.merge_with(mesh, priority='other')
         return flattened_mesh

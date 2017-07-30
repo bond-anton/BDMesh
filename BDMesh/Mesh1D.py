@@ -234,11 +234,21 @@ class Mesh1D(object):
         else:
             return False
 
-    def merge_with(self, mesh):
-        assert isinstance(mesh, Mesh1D)
-        if self.overlap_with(mesh):
-            tmp_mesh_1 = self.copy()
-            tmp_mesh_2 = mesh.copy()
+    def merge_with(self, other, priority='self'):
+        """
+        Merge mesh with another mesh
+        :param other: Mesh1D to merge with
+        :param priority: which solution and residual values are in priority ('self' or 'other')
+        :return:
+        """
+        assert isinstance(other, Mesh1D)
+        if self.overlap_with(other):
+            if priority == 'self':
+                tmp_mesh_1 = self.copy()
+                tmp_mesh_2 = other.copy()
+            elif priority == 'other':
+                tmp_mesh_1 = other.copy()
+                tmp_mesh_2 = self.copy()
             merged_physical_nodes, indices = np.unique(np.concatenate((tmp_mesh_1.physical_nodes,
                                                                        tmp_mesh_2.physical_nodes)).round(12),
                                                        return_index=True)
@@ -251,12 +261,12 @@ class Mesh1D(object):
             residual[np.where(indices < tmp_mesh_1.num)] = tmp_mesh_1.residual[idx_1]
             residual[np.where(indices >= tmp_mesh_1.num)] = tmp_mesh_2.residual[idx_2]
 
-            if self.physical_boundary_1 > mesh.physical_boundary_1:
-                self.boundary_condition_1 = mesh.boundary_condition_1
-                self.physical_boundary_1 = mesh.physical_boundary_1
-            if self.physical_boundary_2 < mesh.physical_boundary_2:
-                self.boundary_condition_2 = mesh.boundary_condition_2
-                self.physical_boundary_2 = mesh.physical_boundary_2
+            if self.physical_boundary_1 > other.physical_boundary_1:
+                self.boundary_condition_1 = other.boundary_condition_1
+                self.physical_boundary_1 = other.physical_boundary_1
+            if self.physical_boundary_2 < other.physical_boundary_2:
+                self.boundary_condition_2 = other.boundary_condition_2
+                self.physical_boundary_2 = other.physical_boundary_2
             self.local_nodes = np.concatenate(([0.0], self.to_local_coordinate(merged_physical_nodes[1:-1]), [1.0]))
             self.solution = solution
             self.residual = residual
