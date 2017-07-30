@@ -93,7 +93,10 @@ class TreeMesh1D(object):
                 for upper_level in upper_levels:
                     for tree_mesh in self.tree[upper_level]:
                         if mesh.is_inside_of(tree_mesh):
-                            self.tree[level].remove(mesh)
+                            try:
+                                self.tree[level].remove(mesh)
+                            except ValueError:
+                                pass
         self.recalculate_levels()
 
     def recalculate_levels(self):

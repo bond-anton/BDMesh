@@ -48,7 +48,6 @@ class TreeMesh1DUniform(TreeMesh1D):
     @aligned.setter
     def aligned(self, aligned):
         assert isinstance(aligned, bool)
-        # TODO: if True, add check whether meshes are actually aligned. For now forbid to change to True
         if self.aligned is None or not aligned:
             self.__aligned = aligned
         else:
@@ -94,7 +93,7 @@ class TreeMesh1DUniform(TreeMesh1D):
         level = m.log(self.root_mesh.physical_step / mesh.physical_step, self.refinement_coefficient)
         if not check_if_integer(level, threshold=1e-6):
             raise ValueError('refinement coefficient rule is violated %2.5f %2.5f' % (level, mesh.physical_step))
-        level = int(level)
+        level = int(round(level))
         if self.aligned and not self.tree[level-1][0].is_aligned_with(mesh):
             raise ValueError('all child meshes must be aligned with the root mesh')
         super(TreeMesh1DUniform, self).add_mesh(mesh, level)
