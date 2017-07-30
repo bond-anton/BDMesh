@@ -106,8 +106,6 @@ class TreeMesh1D(object):
             for level in self.levels:
                 if not self.tree[level]:
                     self.tree.pop(level)
-                    break
-            tidy = True
         offset = min(self.levels)
         if offset != 0:
             for level in self.levels:
