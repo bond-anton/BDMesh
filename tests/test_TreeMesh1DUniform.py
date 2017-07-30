@@ -82,6 +82,19 @@ class TestTreeMesh1DUniform(unittest.TestCase):
         with self.assertRaises(AssertionError):
             self.tree.add_mesh(mesh='a', level=1)
 
+    def test_loop_refinement(self):
+        # adding refinement meshes in a loop
+        mesh = Mesh1DUniform(0.0, 2.0, physical_step=0.1)
+        self.tree = TreeMesh1DUniform(mesh, refinement_coefficient=2, aligned=True, crop=None)
+        for i in range(25):
+            try:
+                mesh = Mesh1DUniform(0.2, 1.1, physical_step=mesh.physical_step / self.tree.refinement_coefficient)
+                self.tree.add_mesh(mesh)
+            except ValueError as e:
+                print(e)
+                print('iteration =', i)
+                break
+
     def test_trim(self):
         mesh = Mesh1DUniform(1, 8, physical_step=0.5)
         self.tree.add_mesh(mesh=mesh)

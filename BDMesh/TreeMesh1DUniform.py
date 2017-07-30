@@ -93,7 +93,7 @@ class TreeMesh1DUniform(TreeMesh1D):
         assert isinstance(mesh, Mesh1DUniform)
         level = m.log(self.root_mesh.physical_step / mesh.physical_step, self.refinement_coefficient)
         if not check_if_integer(level, threshold=1e-10):
-            raise ValueError('refinement coefficient rule is violated')
+            raise ValueError('refinement coefficient rule is violated %2.5f %2.5f' % (level, mesh.physical_step))
         level = int(level)
         if self.aligned and not self.tree[level-1][0].is_aligned_with(mesh):
             raise ValueError('all child meshes must be aligned with the root mesh')

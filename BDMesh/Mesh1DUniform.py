@@ -55,7 +55,8 @@ class Mesh1DUniform(Mesh1D):
         elif physical_step > self.jacobian:
             physical_step = self.jacobian
         num_points = int(np.ceil(self.jacobian / physical_step) + 1)
-        if self.physical_boundary_1 + (num_points - 1) * physical_step > self.physical_boundary_2:
+        err = 1e-3 * physical_step
+        if self.physical_boundary_1 + (num_points - 1) * physical_step > self.physical_boundary_2 + err:
             num_points -= 1
         self.local_nodes = np.linspace(0.0, 1.0, num=num_points, endpoint=True)
         self.__physical_step = self.local_step * self.jacobian
