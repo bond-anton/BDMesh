@@ -87,15 +87,17 @@ class TreeMesh1D(object):
     def remove_coarse_duplicates(self):
         for level in self.levels:
             for mesh in self.tree[level]:
+                mesh_removed = False
                 upper_levels = np.array(self.levels)
                 upper_levels = upper_levels[np.where(upper_levels > level)]
                 for upper_level in upper_levels:
                     for tree_mesh in self.tree[upper_level]:
                         if mesh.is_inside_of(tree_mesh):
-                            try:
-                                self.tree[level].remove(mesh)
-                            except ValueError:
-                                pass
+                            self.tree[level].remove(mesh)
+                            mesh_removed = True
+                            break
+                    if mesh_removed:
+                        break
         self.recalculate_levels()
 
     def recalculate_levels(self):
