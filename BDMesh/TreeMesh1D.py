@@ -82,7 +82,6 @@ class TreeMesh1D(object):
 
     def cleanup(self):
         self.merge_overlaps()
-        # self.remove_coarse_duplicates()
         self.recalculate_levels()
 
     def remove_coarse_duplicates(self):
@@ -136,8 +135,7 @@ class TreeMesh1D(object):
                                 boundary_condition_2=self.root_mesh.boundary_condition_2)
         flattened_mesh.local_nodes = self.root_mesh.local_nodes
         flattened_mesh.solution = self.root_mesh.solution
-        flattened_mesh.residual = self.root_mesh.solution
-
+        flattened_mesh.residual = self.root_mesh.residual
         for level in self.levels[1:]:
             for mesh in self.tree[level]:
                 flattened_mesh.merge_with(mesh, priority='other')
