@@ -249,6 +249,8 @@ class Mesh1D(object):
             elif priority == 'other':
                 tmp_mesh_1 = other.copy()
                 tmp_mesh_2 = self.copy()
+            else:
+                raise ValueError('Priority must be either "self" or "other"')
             merged_physical_nodes, indices = np.unique(np.concatenate((tmp_mesh_1.physical_nodes,
                                                                        tmp_mesh_2.physical_nodes)).round(12),
                                                        return_index=True)

@@ -122,7 +122,7 @@ class TreeMesh1D(object):
                             if self.tree[level][i].overlap_with(self.tree[level][j]):
                                 overlap_found = True
                                 self.tree[level][i].merge_with(self.tree[level][j])
-                                self.tree[level].remove(self.tree[level][j])
+                                self.tree[level].pop(j)
                                 break
                     if overlap_found:
                         break
