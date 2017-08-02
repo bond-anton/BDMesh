@@ -35,11 +35,15 @@ class TreeMesh1DUniform(TreeMesh1D):
     @refinement_coefficient.setter
     def refinement_coefficient(self, refinement_coefficient):
         assert isinstance(refinement_coefficient, (float, int))
-        # TODO: recalculate all meshes if refinement coefficient changed. For now just forbid to change.
         if self.refinement_coefficient is None:
             self.__refinement_coefficient = refinement_coefficient
         else:
-            raise NotImplementedError('Change of refinement coefficient is not implemented yet.')
+            ratio = self.refinement_coefficient / refinement_coefficient
+            for level in self.levels[1:]:
+                for mesh in self.tree[level]:
+                    mesh.physical_step *= ratio
+            self.__refinement_coefficient = refinement_coefficient
+            self.cleanup()
 
     @property
     def aligned(self):

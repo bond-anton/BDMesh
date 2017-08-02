@@ -23,8 +23,15 @@ class TestTreeMesh1DUniform(unittest.TestCase):
 
     def test_refinement_coefficient(self):
         self.assertEqual(self.tree.refinement_coefficient, 2)
-        with self.assertRaises(NotImplementedError):
-            self.tree.refinement_coefficient = 4
+        mesh = Mesh1DUniform(1, 8, physical_step=0.5)
+        self.tree.add_mesh(mesh=mesh)
+        mesh1 = Mesh1DUniform(2, 10, physical_step=0.25)
+        self.tree.add_mesh(mesh=mesh1)
+        self.tree.refinement_coefficient = 4
+        self.assertEqual(self.tree.refinement_coefficient, 4)
+        self.assertEqual(self.tree.tree, {0: [self.root_mesh],
+                                          1: [Mesh1DUniform(1, 8, physical_step=0.25)],
+                                          2: [Mesh1DUniform(2, 10, physical_step=0.125)]})
         with self.assertRaises(AssertionError):
             self.tree.refinement_coefficient = 'a'
 
