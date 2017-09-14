@@ -207,3 +207,19 @@ class TestMesh1DUniform(unittest.TestCase):
         # check AssertionError
         with self.assertRaises(AssertionError):
             self.mesh.merge_with(1)
+        # test priority of meshes
+        self.mesh = Mesh1DUniform(0, 10, physical_step=0.1)
+        other = Mesh1DUniform(5, 15, physical_step=0.1)
+        self.mesh.merge_with(other, priority='self')
+        merged = Mesh1DUniform(0, 15, physical_step=0.1)
+        self.assertEqual(self.mesh, merged)
+        self.mesh = Mesh1DUniform(0, 10, physical_step=0.1)
+        other = Mesh1DUniform(5, 15, physical_step=0.1)
+        self.mesh.merge_with(other, priority='other')
+        merged = Mesh1DUniform(0, 15, physical_step=0.1)
+        self.assertEqual(self.mesh, merged)
+        self.mesh = Mesh1DUniform(0, 10, physical_step=0.1)
+        other = Mesh1DUniform(5, 15, physical_step=0.1)
+        with self.assertRaises(ValueError):
+            self.mesh.merge_with(other, priority='xxx')
+
