@@ -93,7 +93,7 @@ class TestTreeMesh1DUniform(unittest.TestCase):
         # adding refinement meshes in a loop
         mesh = Mesh1DUniform(0.0, 2.0, physical_step=0.1)
         self.tree = TreeMesh1DUniform(mesh, refinement_coefficient=2, aligned=True, crop=None)
-        for i in range(25):
+        for i in range(5):
             try:
                 mesh = Mesh1DUniform(0.2, 1.1, physical_step=mesh.physical_step / self.tree.refinement_coefficient)
                 self.tree.add_mesh(mesh)
