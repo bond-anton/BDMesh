@@ -242,5 +242,31 @@ class TestMesh1D(unittest.TestCase):
         merged.local_nodes = np.linspace(0, 1, num=16)
         self.assertEqual(self.mesh, merged)
 
+        self.mesh = Mesh1D(0, 10)
+        self.mesh.local_nodes = np.linspace(0, 1, num=11)
+        other = Mesh1D(5, 15)
+        other.local_nodes = np.linspace(0, 1, num=11)
+        self.mesh.merge_with(other, priority='self')
+        merged = Mesh1D(0, 15)
+        merged.local_nodes = np.linspace(0, 1, num=16)
+        self.assertEqual(self.mesh, merged)
+
+        self.mesh = Mesh1D(0, 10)
+        self.mesh.local_nodes = np.linspace(0, 1, num=11)
+        other = Mesh1D(5, 15)
+        other.local_nodes = np.linspace(0, 1, num=11)
+        self.mesh.merge_with(other, priority='other')
+        merged = Mesh1D(0, 15)
+        merged.local_nodes = np.linspace(0, 1, num=16)
+        self.assertEqual(self.mesh, merged)
+
+        self.mesh = Mesh1D(0, 10)
+        self.mesh.local_nodes = np.linspace(0, 1, num=11)
+        other = Mesh1D(5, 15)
+        other.local_nodes = np.linspace(0, 1, num=11)
+
+        with self.assertRaises(ValueError):
+            self.mesh.merge_with(other, priority='xxx')
+
         with self.assertRaises(AssertionError):
             self.mesh.merge_with('x')
