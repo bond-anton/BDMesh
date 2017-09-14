@@ -1,4 +1,5 @@
 # BDMesh
+[![Build Status](https://travis-ci.org/bond-anton/BDMesh.svg?branch=master)](https://travis-ci.org/bond-anton/BDMesh)
 
 Mesh generators and tools for operation on meshes and meshes trees.
 
