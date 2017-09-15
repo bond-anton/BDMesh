@@ -186,7 +186,7 @@ class TestMesh1DUniform(unittest.TestCase):
             self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
             num = self.mesh.num - 1
             start = -5
-            for i in range(1, 10):
+            for i in range(1, 5):
                 other = Mesh1DUniform(start, start + 10, num=step_coeff * num + 1)
                 self.mesh.merge_with(other)
                 merged = Mesh1DUniform(min(self.mesh.physical_boundary_1, start),
