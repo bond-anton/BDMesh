@@ -1,4 +1,5 @@
 from setuptools import setup, find_packages
+from Cython.Build import cythonize
 
 from codecs import open
 from os import path
@@ -52,6 +53,7 @@ setup(
     keywords='Mesh',
 
     packages=find_packages(exclude=['demo', 'tests', 'docs', 'contrib']),
+    ext_modules=cythonize('**/*.pyx'),
     install_requires=['numpy'],
     test_suite='nose.collector',
     tests_require=['nose']
