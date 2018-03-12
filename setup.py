@@ -52,8 +52,8 @@ setup(
 
     keywords='Mesh',
 
-    packages=find_packages(exclude=['demo', 'tests', 'docs', 'contrib']),
-    ext_modules=cythonize('**/*.pyx'),
+    packages=find_packages(exclude=['demo', 'tests', 'docs', 'contrib', 'venv']),
+    ext_modules=cythonize('BDMesh/*.pyx'),
     install_requires=['numpy'],
     test_suite='nose.collector',
     tests_require=['nose']
