@@ -34,4 +34,4 @@ cdef class Mesh1D(object):
             raise ValueError('physical boundary 2 must be greater than physical boundary 1')
 
     def __str__(self):
-        return 'Mesh1D: [%2.2g; %2.2g], %d nodes' % (self._physical_boundary_1, self._physical_boundary_2, 2)
+        return 'Mesh1D: [%2.2g; %2.2g], %d nodes' % (self.__physical_boundary_1, self.__physical_boundary_2, 2)
