@@ -1,5 +1,6 @@
 from __future__ import division, print_function
 from libc.math cimport floor, ceil
+from cython cimport boundscheck, wraparound
 
 
 cdef bint check_if_integer_c(double x, double *threshold):
@@ -13,3 +14,16 @@ cdef bint check_if_integer_c(double x, double *threshold):
 
 def check_if_integer(double x, double threshold=1.0e-10):
     return check_if_integer_c(x, &threshold)
+
+
+cdef double trapz_1d(double[:] x, double[:] y):
+    cdef:
+        int nx = x.shape[0], ny = y.shape[0], i
+        double res = 0.0
+    if nx == ny:
+        with boundscheck(False), wraparound(False):
+            for i in range(nx - 1):
+                res += (x[i + 1] - x[i]) * (y[i + 1] + y[i]) / 2
+        return res
+    else:
+        raise ValueError('x and y must be the same size')
