@@ -4,7 +4,7 @@ import numpy as np
 from numbers import Number
 
 
-class Mesh1D(object):
+class Mesh1D_py(object):
     """
     One dimensional mesh for boundary problems
     """

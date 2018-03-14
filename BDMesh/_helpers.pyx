@@ -16,7 +16,7 @@ def check_if_integer(double x, double threshold=1.0e-10):
     return check_if_integer_c(x, &threshold)
 
 
-cdef double trapz_1d(double[:] x, double[:] y):
+cdef double trapz_1d(double[:] y, double[:] x):
     cdef:
         int nx = x.shape[0], ny = y.shape[0], i
         double res = 0.0

@@ -1,9 +1,9 @@
 from __future__ import division, print_function
 import numpy as np
-from cpython.object cimport Py_EQ
+from cpython.object cimport Py_EQ, Py_NE
 from cython import boundscheck, wraparound
 
-from ._helpers import trapz_1d
+from ._helpers cimport trapz_1d
 
 
 cdef class Mesh1D(object):
@@ -14,8 +14,8 @@ cdef class Mesh1D(object):
         double[:] __solution
         double[:] __residual
 
-    def __cinit__(self, double physical_boundary_1, double physical_boundary_2,
-                  double boundary_condition_1, double boundary_condition_2):
+    def __init__(self, double physical_boundary_1, double physical_boundary_2,
+                 double boundary_condition_1=0.0, double boundary_condition_2=0.0):
         if physical_boundary_1 < physical_boundary_2:
             self.__physical_boundary_1 = physical_boundary_1
             self.__physical_boundary_2 = physical_boundary_2
@@ -43,6 +43,14 @@ cdef class Mesh1D(object):
                             if np.allclose(x.local_nodes, y.local_nodes):
                                 return True
             return False
+        elif op == Py_NE:
+            if isinstance(x, Mesh1D) and isinstance(y, Mesh1D):
+                if x.physical_boundary_1 == y.physical_boundary_1:
+                    if x.physical_boundary_2 == y.physical_boundary_2:
+                        if x.local_nodes.size == y.local_nodes.size:
+                            if np.allclose(x.local_nodes, y.local_nodes):
+                                return False
+            return True
         else:
             return False
 
@@ -90,8 +98,12 @@ cdef class Mesh1D(object):
         else:
             raise ValueError('physical boundary 2 must be greater than physical boundary 1')
 
-    cdef double jacobian(self):
+    cdef double j(self):
         return self.__physical_boundary_2 - self.__physical_boundary_1
+
+    @property
+    def jacobian(self):
+        return self.j()
 
     cdef double[:] to_physical(self, double[:] x):
         cdef:
@@ -99,7 +111,7 @@ cdef class Mesh1D(object):
             double[:] res = np.zeros(n)
         with boundscheck(False), wraparound(False):
             for i in range(n):
-                res[i] = self.__physical_boundary_1 + self.jacobian() * x[i]
+                res[i] = self.__physical_boundary_1 + self.j() * x[i]
         return res
 
     def to_physical_coordinate(self, double[:] x):
@@ -111,7 +123,7 @@ cdef class Mesh1D(object):
             double[:] res = np.zeros(n)
         with boundscheck(False), wraparound(False):
             for i in range(n):
-                res[i] = (x[i] - self.__physical_boundary_1) / self.jacobian()
+                res[i] = (x[i] - self.__physical_boundary_1) / self.j()
         return res
 
     def to_local_coordinate(self, double[:] x):
@@ -146,7 +158,7 @@ cdef class Mesh1D(object):
         return np.asarray(self.__solution)
 
     @solution.setter
-    def solution(self, solution):
+    def solution(self, double[:] solution):
         if solution.shape[0] == self.__local_nodes.shape[0]:
             self.__solution = solution
         else:
@@ -157,7 +169,7 @@ cdef class Mesh1D(object):
         return np.asarray(self.__residual)
 
     @residual.setter
-    def residual(self, residual):
+    def residual(self, double[:] residual):
         if residual.shape[0] == self.__local_nodes.shape[0]:
             self.__residual = residual
         else:
@@ -188,3 +200,42 @@ cdef class Mesh1D(object):
             return True
         else:
             return False
+
+    def merge_with(self, other, priority='self'):
+        """
+        Merge mesh with another mesh
+        :param other: Mesh1D to merge with
+        :param priority: which solution and residual values are in priority ('self' or 'other')
+        :return:
+        """
+        assert isinstance(other, Mesh1D)
+        if self.overlap_with(other):
+            if priority == 'self':
+                tmp_mesh_1 = self.copy()
+                tmp_mesh_2 = other.copy()
+            elif priority == 'other':
+                tmp_mesh_1 = other.copy()
+                tmp_mesh_2 = self.copy()
+            else:
+                raise ValueError('Priority must be either "self" or "other"')
+            merged_physical_nodes, indices = np.unique(np.concatenate((tmp_mesh_1.physical_nodes,
+                                                                       tmp_mesh_2.physical_nodes)).round(12),
+                                                       return_index=True)
+            idx_1 = indices[np.where(indices < tmp_mesh_1.num)]
+            idx_2 = indices[np.where(indices >= tmp_mesh_1.num)] - tmp_mesh_1.num
+            solution = np.zeros(merged_physical_nodes.size)
+            solution[np.where(indices < tmp_mesh_1.num)] = tmp_mesh_1.solution[idx_1]
+            solution[np.where(indices >= tmp_mesh_1.num)] = tmp_mesh_2.solution[idx_2]
+            residual = np.zeros(merged_physical_nodes.size)
+            residual[np.where(indices < tmp_mesh_1.num)] = tmp_mesh_1.residual[idx_1]
+            residual[np.where(indices >= tmp_mesh_1.num)] = tmp_mesh_2.residual[idx_2]
+
+            if self.physical_boundary_1 > other.physical_boundary_1:
+                self.boundary_condition_1 = other.boundary_condition_1
+                self.physical_boundary_1 = other.physical_boundary_1
+            if self.physical_boundary_2 < other.physical_boundary_2:
+                self.boundary_condition_2 = other.boundary_condition_2
+                self.physical_boundary_2 = other.physical_boundary_2
+            self.local_nodes = np.concatenate(([0.0], self.to_local_coordinate(merged_physical_nodes[1:-1]), [1.0]))
+            self.solution = solution
+            self.residual = residual
