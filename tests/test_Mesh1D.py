@@ -116,19 +116,19 @@ class TestMesh1D(unittest.TestCase):
             self.mesh.residual = np.array([1.0])
         self.assertEqual(self.mesh.integrational_residual, np.trapz(self.mesh.residual, self.mesh.physical_nodes))
 
-    # def test_local_f(self):
-    #     a = np.linspace(0.0, 1.0, num=101, endpoint=True)
-    #     self.mesh.local_nodes = a
-    #     f = np.sin
-    #     local_f = self.mesh.local_f(f)
-    #     np.testing.assert_equal(f(self.mesh.physical_nodes), local_f(self.mesh.local_nodes))
-    #
-    #     def f(x, t):
-    #         return np.sin(x) * t
-    #     local_f = self.mesh.local_f(f, 2)
-    #     np.testing.assert_equal(f(self.mesh.physical_nodes, 2), local_f(self.mesh.local_nodes, 2))
-    #     with self.assertRaises(AssertionError):
-    #         self.mesh.local_f('global_f')
+    def test_local_f(self):
+        a = np.linspace(0.0, 1.0, num=101, endpoint=True)
+        self.mesh.local_nodes = a
+        f = np.sin
+        local_f = self.mesh.local_f(f)
+        np.testing.assert_equal(f(self.mesh.physical_nodes), local_f(self.mesh.local_nodes))
+
+        def f(x, t):
+            return np.sin(x) * t
+        local_f = self.mesh.local_f(f, 2)
+        np.testing.assert_equal(f(self.mesh.physical_nodes, 2), local_f(self.mesh.local_nodes, 2))
+        with self.assertRaises(AssertionError):
+            self.mesh.local_f('global_f')
 
     def test_inner_mesh(self):
         other = Mesh1D(0.5 * m.pi, 2.5 * m.pi)

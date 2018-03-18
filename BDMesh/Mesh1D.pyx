@@ -3,7 +3,7 @@ import numpy as np
 from cpython.object cimport Py_EQ, Py_NE
 from cython import boundscheck, wraparound
 
-from ._helpers cimport trapz_1d
+from ._helpers cimport trapz_1d, interp_1d
 
 
 cdef class Mesh1D(object):
@@ -60,19 +60,16 @@ cdef class Mesh1D(object):
 
     @local_nodes.setter
     def local_nodes(self, double[:] local_nodes):
-        n = local_nodes.shape[0]
+        cdef:
+            int n = local_nodes.shape[0]
+            double[:] physical_nodes_old
         if n < 2:
             raise ValueError('Mesh must have at least two nodes')
         if local_nodes[0] == 0.0 and local_nodes[n-1] == 1.0:
-            #if self.__local_nodes is None:
+            physical_nodes_old = self.to_physical(self.__local_nodes)
             self.__local_nodes = local_nodes
-            #     self.solution = np.zeros(self.num)
-            #     self.residual = np.zeros(self.num)
-            # else:
-            #     physical_nodes_old = self.physical_nodes
-            #     self.__local_nodes = np.array(local_nodes).astype(np.float)
-            #     self.solution = np.interp(self.physical_nodes, physical_nodes_old, self.solution)
-            #     self.residual = np.interp(self.physical_nodes, physical_nodes_old, self.residual)
+            self.__solution = interp_1d(self.to_physical(self.__local_nodes), physical_nodes_old, self.__solution)
+            self.__residual = interp_1d(self.to_physical(self.__local_nodes), physical_nodes_old, self.__residual)
         else:
             raise ValueError('Local mesh nodes must start with 0.0 and end with 1.0')
 
@@ -181,6 +178,23 @@ cdef class Mesh1D(object):
     @property
     def integrational_residual(self):
         return self.int_res()
+
+    def local_f(self, f, args=None):
+        """
+        return function equivalent to f on local nodes
+        :param f: callable with first argument x - coordinate in physical space
+        :param args: possible additional arguments of f
+        :return: function equivalent to f on local nodes
+        """
+        assert callable(f)
+
+        def f_local(x, arguments=args):
+            if arguments is not None:
+                return f(self.to_physical_coordinate(x), arguments)
+            else:
+                return f(self.to_physical_coordinate(x))
+
+        return f_local
 
     cpdef bint is_inside_of(self, Mesh1D mesh):
         if mesh.__physical_boundary_1 <= self.__physical_boundary_1:
