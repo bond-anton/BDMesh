@@ -176,102 +176,102 @@ class TestMesh1D(unittest.TestCase):
         with self.assertRaises(TypeError):
             self.mesh.overlap_with('x')
 
-    # def test_merge(self):
-    #     # other bounds self.mesh
-    #     self.mesh = Mesh1D(1.0 * m.pi, 2.0 * m.pi)
-    #     other = Mesh1D(0.5 * m.pi, 2.5 * m.pi)
-    #     self.mesh.merge_with(other)
-    #     other.local_nodes = (np.array([0.5, 1.0, 2.0, 2.5]) - 0.5) / 2.0
-    #     self.assertEqual(self.mesh, other)
-    #
-    #     # other is inner to self.mesh
-    #     self.mesh = Mesh1D(1.0 * m.pi, 2.0 * m.pi)
-    #     other = Mesh1D(1.1 * m.pi, 1.9 * m.pi)
-    #     self.mesh.merge_with(other)
-    #     merged = Mesh1D(1.0 * m.pi, 2.0 * m.pi)
-    #     merged.local_nodes = np.array([1.0, 1.1, 1.9, 2.0]) - 1.0
-    #     self.assertEqual(self.mesh, merged)
-    #
-    #     # other equals to self.mesh
-    #     self.mesh = Mesh1D(1.0 * m.pi, 2.0 * m.pi)
-    #     other = Mesh1D(1.0 * m.pi, 2.0 * m.pi)
-    #     self.mesh.merge_with(other)
-    #     self.assertEqual(self.mesh, other)
-    #     other.merge_with(self.mesh)
-    #     self.assertEqual(self.mesh, other)
-    #
-    #     # other overlaps with self.mesh
-    #     self.mesh = Mesh1D(1.0 * m.pi, 2.0 * m.pi)
-    #     other = Mesh1D(0.5 * m.pi, 1.5 * m.pi)
-    #     self.mesh.merge_with(other)
-    #     merged = Mesh1D(0.5 * m.pi, 2 * m.pi)
-    #     merged.local_nodes = (np.array([0.5, 1.0, 1.5, 2.0]) - 0.5) / 1.5
-    #     self.assertEqual(self.mesh, merged)
-    #     self.mesh = Mesh1D(1.0 * m.pi, 2.0 * m.pi)
-    #     other.merge_with(self.mesh)
-    #     self.assertEqual(other, merged)
-    #
-    #     # other coincide with self.mesh in single point from left side
-    #     self.mesh = Mesh1D(1.0 * m.pi, 2.0 * m.pi)
-    #     other = Mesh1D(0.5 * m.pi, 1.0 * m.pi)
-    #     self.mesh.merge_with(other)
-    #     merged = Mesh1D(0.5 * m.pi, 2 * m.pi)
-    #     merged.local_nodes = (np.array([0.5, 1.0, 2.0]) - 0.5) / 1.5
-    #     self.assertEqual(self.mesh, merged)
-    #     # other coincide with self.mesh in single point from right side
-    #     self.mesh = Mesh1D(1.0 * m.pi, 2.0 * m.pi)
-    #     other = Mesh1D(2.0 * m.pi, 3.0 * m.pi)
-    #     self.mesh.merge_with(other)
-    #     merged = Mesh1D(m.pi, 3 * m.pi)
-    #     merged.local_nodes = (np.array([1.0, 2.0, 3.0]) - 1.0) / 2.0
-    #     self.assertEqual(self.mesh, merged)
-    #     # meshes do not overlap
-    #     self.mesh = Mesh1D(1.0 * m.pi, 2.0 * m.pi)
-    #     other = Mesh1D(0.5 * m.pi, 0.99 * m.pi)
-    #     self.mesh.merge_with(other)
-    #     self.assertEqual(self.mesh, Mesh1D(m.pi, 2 * m.pi))
-    #     other.merge_with(self.mesh)
-    #     self.assertEqual(other, Mesh1D(0.5 * m.pi, 0.99 * m.pi))
-    #     other = Mesh1D(2.01 * m.pi, 3.0 * m.pi)
-    #     self.mesh.merge_with(other)
-    #     self.assertEqual(self.mesh, Mesh1D(m.pi, 2 * m.pi))
-    #     other.merge_with(self.mesh)
-    #     self.assertEqual(other, Mesh1D(2.01 * m.pi, 3.0 * m.pi))
-    #
-    #     self.mesh = Mesh1D(0, 10)
-    #     self.mesh.local_nodes = np.linspace(0, 1, num=11)
-    #     other = Mesh1D(5, 15)
-    #     other.local_nodes = np.linspace(0, 1, num=11)
-    #     self.mesh.merge_with(other)
-    #     merged = Mesh1D(0, 15)
-    #     merged.local_nodes = np.linspace(0, 1, num=16)
-    #     self.assertEqual(self.mesh, merged)
-    #
-    #     self.mesh = Mesh1D(0, 10)
-    #     self.mesh.local_nodes = np.linspace(0, 1, num=11)
-    #     other = Mesh1D(5, 15)
-    #     other.local_nodes = np.linspace(0, 1, num=11)
-    #     self.mesh.merge_with(other, priority='self')
-    #     merged = Mesh1D(0, 15)
-    #     merged.local_nodes = np.linspace(0, 1, num=16)
-    #     self.assertEqual(self.mesh, merged)
-    #
-    #     self.mesh = Mesh1D(0, 10)
-    #     self.mesh.local_nodes = np.linspace(0, 1, num=11)
-    #     other = Mesh1D(5, 15)
-    #     other.local_nodes = np.linspace(0, 1, num=11)
-    #     self.mesh.merge_with(other, priority='other')
-    #     merged = Mesh1D(0, 15)
-    #     merged.local_nodes = np.linspace(0, 1, num=16)
-    #     self.assertEqual(self.mesh, merged)
-    #
-    #     self.mesh = Mesh1D(0, 10)
-    #     self.mesh.local_nodes = np.linspace(0, 1, num=11)
-    #     other = Mesh1D(5, 15)
-    #     other.local_nodes = np.linspace(0, 1, num=11)
-    #
-    #     with self.assertRaises(ValueError):
-    #         self.mesh.merge_with(other, priority='xxx')
-    #
-    #     with self.assertRaises(AssertionError):
-    #         self.mesh.merge_with('x')
+    def test_merge(self):
+        # other bounds self.mesh
+        self.mesh = Mesh1D(1.0 * m.pi, 2.0 * m.pi)
+        other = Mesh1D(0.5 * m.pi, 2.5 * m.pi)
+        self.mesh.merge_with(other)
+        other.local_nodes = (np.array([0.5, 1.0, 2.0, 2.5]) - 0.5) / 2.0
+        self.assertEqual(self.mesh, other)
+
+        # other is inner to self.mesh
+        self.mesh = Mesh1D(1.0 * m.pi, 2.0 * m.pi)
+        other = Mesh1D(1.1 * m.pi, 1.9 * m.pi)
+        self.mesh.merge_with(other)
+        merged = Mesh1D(1.0 * m.pi, 2.0 * m.pi)
+        merged.local_nodes = np.array([1.0, 1.1, 1.9, 2.0]) - 1.0
+        self.assertEqual(self.mesh, merged)
+
+        # other equals to self.mesh
+        self.mesh = Mesh1D(1.0 * m.pi, 2.0 * m.pi)
+        other = Mesh1D(1.0 * m.pi, 2.0 * m.pi)
+        self.mesh.merge_with(other)
+        self.assertEqual(self.mesh, other)
+        other.merge_with(self.mesh)
+        self.assertEqual(self.mesh, other)
+
+        # other overlaps with self.mesh
+        self.mesh = Mesh1D(1.0 * m.pi, 2.0 * m.pi)
+        other = Mesh1D(0.5 * m.pi, 1.5 * m.pi)
+        self.mesh.merge_with(other)
+        merged = Mesh1D(0.5 * m.pi, 2 * m.pi)
+        merged.local_nodes = (np.array([0.5, 1.0, 1.5, 2.0]) - 0.5) / 1.5
+        self.assertEqual(self.mesh, merged)
+        self.mesh = Mesh1D(1.0 * m.pi, 2.0 * m.pi)
+        other.merge_with(self.mesh)
+        self.assertEqual(other, merged)
+
+        # other coincide with self.mesh in single point from left side
+        self.mesh = Mesh1D(1.0 * m.pi, 2.0 * m.pi)
+        other = Mesh1D(0.5 * m.pi, 1.0 * m.pi)
+        self.mesh.merge_with(other)
+        merged = Mesh1D(0.5 * m.pi, 2 * m.pi)
+        merged.local_nodes = (np.array([0.5, 1.0, 2.0]) - 0.5) / 1.5
+        self.assertEqual(self.mesh, merged)
+        # other coincide with self.mesh in single point from right side
+        self.mesh = Mesh1D(1.0 * m.pi, 2.0 * m.pi)
+        other = Mesh1D(2.0 * m.pi, 3.0 * m.pi)
+        self.mesh.merge_with(other)
+        merged = Mesh1D(m.pi, 3 * m.pi)
+        merged.local_nodes = (np.array([1.0, 2.0, 3.0]) - 1.0) / 2.0
+        self.assertEqual(self.mesh, merged)
+        # meshes do not overlap
+        self.mesh = Mesh1D(1.0 * m.pi, 2.0 * m.pi)
+        other = Mesh1D(0.5 * m.pi, 0.99 * m.pi)
+        self.mesh.merge_with(other)
+        self.assertEqual(self.mesh, Mesh1D(m.pi, 2 * m.pi))
+        other.merge_with(self.mesh)
+        self.assertEqual(other, Mesh1D(0.5 * m.pi, 0.99 * m.pi))
+        other = Mesh1D(2.01 * m.pi, 3.0 * m.pi)
+        self.mesh.merge_with(other)
+        self.assertEqual(self.mesh, Mesh1D(m.pi, 2 * m.pi))
+        other.merge_with(self.mesh)
+        self.assertEqual(other, Mesh1D(2.01 * m.pi, 3.0 * m.pi))
+
+        self.mesh = Mesh1D(0, 10)
+        self.mesh.local_nodes = np.linspace(0, 1, num=11)
+        other = Mesh1D(5, 15)
+        other.local_nodes = np.linspace(0, 1, num=11)
+        self.mesh.merge_with(other)
+        merged = Mesh1D(0, 15)
+        merged.local_nodes = np.linspace(0, 1, num=16)
+        self.assertEqual(self.mesh, merged)
+
+        self.mesh = Mesh1D(0, 10)
+        self.mesh.local_nodes = np.linspace(0, 1, num=11)
+        other = Mesh1D(5, 15)
+        other.local_nodes = np.linspace(0, 1, num=11)
+        self.mesh.merge_with(other, self_priority=True)
+        merged = Mesh1D(0, 15)
+        merged.local_nodes = np.linspace(0, 1, num=16)
+        self.assertEqual(self.mesh, merged)
+
+        self.mesh = Mesh1D(0, 10)
+        self.mesh.local_nodes = np.linspace(0, 1, num=11)
+        other = Mesh1D(5, 15)
+        other.local_nodes = np.linspace(0, 1, num=11)
+        self.mesh.merge_with(other, self_priority=False)
+        merged = Mesh1D(0, 15)
+        merged.local_nodes = np.linspace(0, 1, num=16)
+        self.assertEqual(self.mesh, merged)
+
+        self.mesh = Mesh1D(0, 10)
+        self.mesh.local_nodes = np.linspace(0, 1, num=11)
+        other = Mesh1D(5, 15)
+        other.local_nodes = np.linspace(0, 1, num=11)
+
+        with self.assertRaises(TypeError):
+            self.mesh.merge_with(other, priority='xxx')
+
+        with self.assertRaises(TypeError):
+            self.mesh.merge_with('x')

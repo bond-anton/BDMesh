@@ -215,41 +215,75 @@ cdef class Mesh1D(object):
         else:
             return False
 
-    def merge_with(self, other, priority='self'):
+    cpdef void merge_with(self, Mesh1D other, double threshold=1e-10, bint self_priority=True):
         """
         Merge mesh with another mesh
         :param other: Mesh1D to merge with
-        :param priority: which solution and residual values are in priority ('self' or 'other')
+        :param threshold: threshold for nodes matching
+        :param self_priority: which solution and residual values are in priority ('self' or 'other')
         :return:
         """
-        assert isinstance(other, Mesh1D)
+        cdef:
+            int n = self.__local_nodes.shape[0]
+            int m = other.__local_nodes.shape[0]
+            int i = 0, j = 0, k = 0
+            double bc_1, bc_2
+            double[:] phys = np.zeros(n + m)
+            double[:] sol = np.zeros(n + m)
+            double[:] res = np.zeros(n + m)
+            double[:] phys_self, phys_other
         if self.overlap_with(other):
-            if priority == 'self':
-                tmp_mesh_1 = self.copy()
-                tmp_mesh_2 = other.copy()
-            elif priority == 'other':
-                tmp_mesh_1 = other.copy()
-                tmp_mesh_2 = self.copy()
+            if self.__physical_boundary_1 <= other.__physical_boundary_1:
+                bc_1 = self.__boundary_condition_1
             else:
-                raise ValueError('Priority must be either "self" or "other"')
-            merged_physical_nodes, indices = np.unique(np.concatenate((tmp_mesh_1.physical_nodes,
-                                                                       tmp_mesh_2.physical_nodes)).round(12),
-                                                       return_index=True)
-            idx_1 = indices[np.where(indices < tmp_mesh_1.num)]
-            idx_2 = indices[np.where(indices >= tmp_mesh_1.num)] - tmp_mesh_1.num
-            solution = np.zeros(merged_physical_nodes.size)
-            solution[np.where(indices < tmp_mesh_1.num)] = tmp_mesh_1.solution[idx_1]
-            solution[np.where(indices >= tmp_mesh_1.num)] = tmp_mesh_2.solution[idx_2]
-            residual = np.zeros(merged_physical_nodes.size)
-            residual[np.where(indices < tmp_mesh_1.num)] = tmp_mesh_1.residual[idx_1]
-            residual[np.where(indices >= tmp_mesh_1.num)] = tmp_mesh_2.residual[idx_2]
-
-            if self.physical_boundary_1 > other.physical_boundary_1:
-                self.boundary_condition_1 = other.boundary_condition_1
-                self.physical_boundary_1 = other.physical_boundary_1
-            if self.physical_boundary_2 < other.physical_boundary_2:
-                self.boundary_condition_2 = other.boundary_condition_2
-                self.physical_boundary_2 = other.physical_boundary_2
-            self.local_nodes = np.concatenate(([0.0], self.to_local_coordinate(merged_physical_nodes[1:-1]), [1.0]))
-            self.solution = solution
-            self.residual = residual
+                bc_1 = other.__boundary_condition_1
+            if self.__physical_boundary_2 >= other.__physical_boundary_2:
+                bc_2 = self.__boundary_condition_2
+            else:
+                bc_2 = other.__boundary_condition_2
+            phys_self = self.to_physical(self.__local_nodes)
+            phys_other = other.to_physical(other.__local_nodes)
+            with boundscheck(False), wraparound(False):
+                while i < n or j < m:
+                    if i < n:
+                        if j < m:
+                            if abs(phys_self[i] - phys_other[j]) < threshold:
+                                if self_priority:
+                                    phys[k] = phys_self[i]
+                                    sol[k] = self.__solution[i]
+                                    res[k] = self.__residual[i]
+                                else:
+                                    phys[k] = phys_other[j]
+                                    sol[k] = other.__solution[j]
+                                    res[k] = other.__residual[j]
+                                i += 1
+                                j += 1
+                            elif phys_self[i] < phys_other[j]:
+                                phys[k] = phys_self[i]
+                                sol[k] = self.__solution[i]
+                                res[k] = self.__residual[i]
+                                i += 1
+                            else:
+                                phys[k] = phys_other[j]
+                                sol[k] = other.__solution[j]
+                                res[k] = other.__residual[j]
+                                j += 1
+                        else:
+                            phys[k] = phys_self[i]
+                            sol[k] = self.__solution[i]
+                            res[k] = self.__residual[i]
+                            i += 1
+                    else:
+                        if j < m:
+                            phys[k] = phys_other[j]
+                            sol[k] = other.__solution[j]
+                            res[k] = other.__residual[j]
+                            j += 1
+                    k += 1
+                self.__physical_boundary_1 = phys[0]
+                self.__physical_boundary_2 = phys[k - 1]
+                self.__boundary_condition_1 = bc_1
+                self.__boundary_condition_2 = bc_2
+                self.__local_nodes = self.to_local(phys[:k])
+                self.__solution = sol[:k]
+                self.__residual = res[:k]
