@@ -7,12 +7,6 @@ from ._helpers cimport trapz_1d, interp_1d
 
 
 cdef class Mesh1D(object):
-    cdef:
-        double __physical_boundary_1, __physical_boundary_2
-        double __boundary_condition_1, __boundary_condition_2
-        double[:] __local_nodes
-        double[:] __solution
-        double[:] __residual
 
     def __init__(self, double physical_boundary_1, double physical_boundary_2,
                  double boundary_condition_1=0.0, double boundary_condition_2=0.0):

@@ -1,5 +1,4 @@
 from __future__ import division, print_function
-from copy import copy, deepcopy
 import math as m
 import numpy as np
 import unittest
@@ -26,14 +25,6 @@ class TestMesh1D(unittest.TestCase):
                          'Mesh1D: [%2.2g; %2.2g], %d nodes' % (self.mesh.physical_boundary_1,
                                                                self.mesh.physical_boundary_2,
                                                                self.mesh.num))
-
-    # def test_copy(self):
-    #     mesh_copy = self.mesh.copy()
-    #     self.assertEqual(self.mesh, mesh_copy)
-    #     mesh_copy = copy(self.mesh)
-    #     self.assertEqual(self.mesh, mesh_copy)
-    #     mesh_copy = deepcopy(self.mesh)
-    #     self.assertEqual(self.mesh, mesh_copy)
 
     def test_physical_boundaries(self):
         self.assertEqual(self.mesh.physical_boundary_1, m.pi)
