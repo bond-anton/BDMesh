@@ -27,7 +27,7 @@ cdef class Mesh1DUniform(Mesh1D):
         super(Mesh1DUniform, self).__init__(physical_boundary_1, physical_boundary_2,
                                             boundary_condition_1=boundary_condition_1,
                                             boundary_condition_2=boundary_condition_2)
-        if crop == [0, 0]:
+        if crop[0] == 0 and crop[1] == 0:
             self.__crop = [0, 0]
         else:
             self.__crop = crop
