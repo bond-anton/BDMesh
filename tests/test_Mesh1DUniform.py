@@ -21,8 +21,6 @@ class TestMesh1DUniform(unittest.TestCase):
         self.assertNotEqual(self.mesh, other_mesh)
         other_mesh = Mesh1DUniform(3 * m.pi, m.pi)
         self.assertNotEqual(self.mesh, other_mesh)
-        with self.assertRaises(AssertionError):
-            self.mesh == 'a'
         self.assertEqual(str(self.mesh),
                          'Mesh1DUniform: [%2.2g; %2.2g], %2.2g step, %d nodes' % (self.mesh.physical_boundary_1,
                                                                                   self.mesh.physical_boundary_2,
@@ -32,22 +30,19 @@ class TestMesh1DUniform(unittest.TestCase):
         other_mesh = Mesh1DUniform(-10, 10, num=21)
         self.assertEqual(self.mesh, other_mesh)
 
-"""
     def test_physical_step(self):
         self.mesh = Mesh1DUniform(0, 10, physical_step=1.0, num=100)
         self.assertEqual(self.mesh.physical_step, 1.0)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(TypeError):
             self.mesh.physical_step = 'a'
         self.mesh.physical_step = 1.1
         self.assertNotEqual(self.mesh.physical_step, 1.1)
-        with self.assertRaises(ValueError):
-            self.mesh.physical_step = 0
         self.mesh.physical_step = self.mesh.jacobian
         self.assertEqual(self.mesh.physical_step, self.mesh.jacobian)
         self.mesh.physical_step = 1.1 * self.mesh.jacobian
         self.assertEqual(self.mesh.physical_step, self.mesh.jacobian)
         self.mesh.physical_step = -1.0
-        self.assertEqual(self.mesh.physical_step, 1.0)
+        self.assertEqual(self.mesh.physical_step, 10.0)
 
     def test_local_step(self):
         self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
@@ -56,41 +51,35 @@ class TestMesh1DUniform(unittest.TestCase):
         self.assertEqual(self.mesh.local_step, 0.05)
         self.mesh.local_step = 0.053
         self.assertNotEqual(self.mesh.local_step, 0.053)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(TypeError):
             self.mesh.local_step = 'a'
         self.mesh.local_step = 1
         self.assertEqual(self.mesh.local_step, 1)
-        with self.assertRaises(ValueError):
-            self.mesh.local_step = 0
         self.mesh.local_step = 2
         self.assertEqual(self.mesh.local_step, 1)
         self.mesh.local_step = -2
         self.assertEqual(self.mesh.local_step, 1)
         self.mesh.local_step = -0.5
-        self.assertEqual(self.mesh.local_step, 0.5)
+        self.assertEqual(self.mesh.local_step, 1.0)
 
     def test_num(self):
         self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
         self.assertEqual(self.mesh.num, 11)
         self.mesh.num = 12
         self.assertEqual(self.mesh.num, 12)
-        with self.assertRaises(ValueError):
-            self.mesh.num = 1e-5
-        with self.assertRaises(ValueError):
-            self.mesh.num = 1
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             self.mesh.num = 'a'
-        self.mesh.num = None
-        self.assertEqual(self.mesh.num, 2)
+        with self.assertRaises(TypeError):
+            self.mesh.num = None
+        self.assertEqual(self.mesh.num, 12)
         self.mesh.num = 2 + 1e-11
+        self.assertEqual(self.mesh.num, 2)
+        self.mesh.num = 2.8
         self.assertEqual(self.mesh.num, 2)
         self.mesh.num = 2
         self.assertEqual(self.mesh.num, 2)
-        with self.assertRaises(ValueError):
-            self.mesh.num = -1
-        with self.assertRaises(ValueError):
-            self.mesh.num = -2
 
+    """
     def test_crop(self):
         self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
         self.mesh.crop = [3, 2]

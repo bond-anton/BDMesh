@@ -1,7 +1,7 @@
 from __future__ import division, print_function
-# import numpy as np
+import numpy as np
 
-from libc.math cimport floor
+from libc.math cimport floor, ceil
 from .Mesh1D cimport Mesh1D
 # from ._helpers import check_if_integer
 
@@ -13,7 +13,7 @@ cdef class Mesh1DUniform(Mesh1D):
 
     def __init__(self, double physical_boundary_1, double physical_boundary_2,
                  double boundary_condition_1=0.0, double boundary_condition_2=0.0,
-                 double physical_step=0.0, int num=2, int[2] crop=[0, 0]):
+                 double physical_step=0.0, int num=2, crop=[0, 0]):
         """
         UniformMesh1D constructor
         :param physical_boundary_1: float value of left physical boundary position.
@@ -27,17 +27,26 @@ cdef class Mesh1DUniform(Mesh1D):
         super(Mesh1DUniform, self).__init__(physical_boundary_1, physical_boundary_2,
                                             boundary_condition_1=boundary_condition_1,
                                             boundary_condition_2=boundary_condition_2)
-        if crop[0] == 0 and crop[1] == 0:
-            self.__crop = [0, 0]
-        else:
-            self.__crop = crop
         if physical_step <= 0.0:
             if num <= 2:
                 self.__num = 2
             else:
                 self.__num = num
         else:
-            self.__num = floor(abs(physical_boundary_2 - physical_boundary_1) / physical_step) + 1
+            self.__num = int(floor(abs(physical_boundary_2 - physical_boundary_1) / physical_step)) + 1
+        self.__local_nodes = np.linspace(0.0, 1.0, num=self.__num, endpoint=True)
+        if crop[0] <= 0:
+            self.__crop[0] = 0
+        elif crop[0] >= self.__num:
+            self.__crop[0] = self.__num - 2
+        else:
+            self.__crop[0] = int(crop[0])
+        if crop[1] <= 0:
+            self.__crop[1] = 0
+        elif crop[1] >= self.__num - self.__crop[0]:
+            self.__crop[1] = self.__num - self.__crop[0] - 2
+        else:
+            self.__crop[1] = int(crop[1])
 
     def __str__(self):
         return 'Mesh1DUniform: [%2.2g; %2.2g], %2.2g step, %d nodes' % (self.physical_boundary_1,
@@ -45,81 +54,63 @@ cdef class Mesh1DUniform(Mesh1D):
                                                                         self.physical_step,
                                                                         self.num)
 
-    # @property
-    # def physical_step(self):
-    #     return self.__physical_step
-    #
-    # @physical_step.setter
-    # def physical_step(self, physical_step):
-    #     assert isinstance(physical_step, Number)
-    #     physical_step = float(abs(physical_step))
-    #     if np.allclose([physical_step], [0.0]):
-    #         raise ValueError('step can not be zero!')
-    #     elif physical_step > self.jacobian:
-    #         physical_step = self.jacobian
-    #     num_points = int(np.ceil(self.jacobian / physical_step) + 1)
-    #     err = 1e-3 * physical_step
-    #     if self.physical_boundary_1 + (num_points - 1) * physical_step > self.physical_boundary_2 + err:
-    #         num_points -= 1
-    #     self.local_nodes = np.linspace(0.0, 1.0, num=num_points, endpoint=True)
-    #     self.__physical_step = self.local_step * self.jacobian
-    #
-    # @property
-    # def num(self):
-    #     return len(self.local_nodes)
-    #
-    # @num.setter
-    # def num(self, num):
-    #     if num is None:
-    #         num_points = 2
-    #     elif not isinstance(num, Number):
-    #         raise ValueError('number of nodes must be integer')
-    #     elif not check_if_integer(num):
-    #         raise ValueError('number of nodes must be integer')
-    #     elif int(num) < 2:
-    #         raise ValueError('number of nodes must be greater or equal to two')
-    #     else:
-    #         num_points = int(num)
-    #     self.local_nodes = np.linspace(0.0, 1.0, num=num_points, endpoint=True)
-    #     self.__physical_step = self.local_step * self.jacobian
-    #
-    # @property
-    # def local_step(self):
-    #     return self.local_nodes[-1] / (self.num - 1)
-    #
-    # @local_step.setter
-    # def local_step(self, local_step):
-    #     assert isinstance(local_step, Number)
-    #     local_step = float(abs(local_step))
-    #     if local_step > 1:
-    #         local_step = 1
-    #     elif np.allclose([local_step], [0.0]):
-    #         raise ValueError('step can not be zero!')
-    #     self.physical_step = local_step * self.jacobian
-    #
-    # @property
-    # def crop(self):
-    #     return self.__crop
-    #
-    # @crop.setter
-    # def crop(self, crop):
-    #     if crop is None:
-    #         self.__crop = np.array([0, 0], dtype=np.int)
-    #     else:
-    #         try:
-    #             _ = iter(crop)
-    #         except TypeError:
-    #             raise TypeError(crop, 'is not iterable')
-    #         if len(crop) != 2:
-    #             raise ValueError('crop must be iterable of size 2')
-    #         else:
-    #             crop = np.array(crop).astype(np.int)
-    #             if np.sum(crop) > self.num - 2:
-    #                 raise ValueError('At least two nodes must remain after trimming')
-    #             if (crop < 0).any():
-    #                 raise ValueError('crop positions must be greater than zero')
-    #             self.__crop = crop
-    #
+    @property
+    def num(self):
+        return self.__num
+
+    @num.setter
+    def num(self, int num):
+        if num < 2:
+            self.__num = 2
+        else:
+            self.__num = num
+        self.__local_nodes = np.linspace(0.0, 1.0, num=self.__num, endpoint=True)
+
+    @property
+    def local_step(self):
+        return 1.0 / (self.__num - 1)
+
+    @local_step.setter
+    def local_step(self, double local_step):
+        if local_step > 1:
+            self.num = 2
+        elif local_step <= 0:
+            self.num = 2
+        else:
+            self.num = int(1.0 / local_step) + 1
+
+    @property
+    def physical_step(self):
+        return self.local_step * self.jacobian
+
+    @physical_step.setter
+    def physical_step(self, double physical_step):
+        if physical_step > self.jacobian:
+            self.num = 2
+        elif physical_step <= 0.0:
+            self.num = 2
+        else:
+            self.num = int(ceil(self.jacobian / physical_step)) + 1
+
+    @property
+    def crop(self):
+        return self.__crop
+
+    @crop.setter
+    def crop(self, crop):
+        if crop[0] <= 0:
+            self.__crop[0] = 0
+        elif crop[0] >= self.__num:
+            self.__crop[0] = self.__num - 2
+        else:
+            self.__crop[0] = int(crop[0])
+        if crop[1] <= 0:
+            self.__crop[1] = 0
+        elif crop[1] >= self.__num - self.__crop[0]:
+            self.__crop[1] = self.__num - self.__crop[0] - 2
+        else:
+            self.__crop[1] = int(crop[1])
+
     # def trim(self):
     #     solution = self.solution[self.crop[0]:self.num-self.crop[1]]
     #     residual = self.residual[self.crop[0]:self.num-self.crop[1]]
