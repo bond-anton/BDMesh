@@ -41,6 +41,7 @@ cdef class Mesh1DUniform(Mesh1D):
             self.__crop[0] = self.__num - 2
         else:
             self.__crop[0] = int(crop[0])
+
         if crop[1] <= 0:
             self.__crop[1] = 0
         elif crop[1] >= self.__num - self.__crop[0]:
@@ -104,9 +105,10 @@ cdef class Mesh1DUniform(Mesh1D):
             self.__crop[0] = self.__num - 2
         else:
             self.__crop[0] = int(crop[0])
+
         if crop[1] <= 0:
             self.__crop[1] = 0
-        elif crop[1] >= self.__num - self.__crop[0]:
+        elif crop[1] >= self.__num - self.__crop[0] - 2:
             self.__crop[1] = self.__num - self.__crop[0] - 2
         else:
             self.__crop[1] = int(crop[1])

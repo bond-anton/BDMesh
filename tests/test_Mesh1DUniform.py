@@ -79,32 +79,30 @@ class TestMesh1DUniform(unittest.TestCase):
         self.mesh.num = 2
         self.assertEqual(self.mesh.num, 2)
 
-    """
     def test_crop(self):
         self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
         self.mesh.crop = [3, 2]
         np.testing.assert_equal(self.mesh.crop, np.array([3, 2]))
-        self.mesh.crop = None
-        np.testing.assert_equal(self.mesh.crop, np.array([0, 0]))
         self.mesh.crop = [0, 0]
         np.testing.assert_equal(self.mesh.crop, np.array([0, 0]))
         self.mesh.crop = [3, 2]
         np.testing.assert_equal(self.mesh.crop, np.array([3, 2]))
         with self.assertRaises(TypeError):
             self.mesh.crop = 3
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             self.mesh.crop = 'a'
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             self.mesh.crop = 'ab'
-        with self.assertRaises(ValueError):
-            self.mesh.crop = [-3, 2]
-        with self.assertRaises(ValueError):
-            self.mesh.crop = [3, -2]
-        with self.assertRaises(ValueError):
-            self.mesh.crop = [3, 2, 1]
-        with self.assertRaises(ValueError):
-            self.mesh.crop = [5, 5]
+        self.mesh.crop = [-3, 2]
+        np.testing.assert_equal(self.mesh.crop, np.array([0, 2]))
+        self.mesh.crop = [3, -2]
+        np.testing.assert_equal(self.mesh.crop, np.array([3, 0]))
+        self.mesh.crop = [3, 2, 1]
+        np.testing.assert_equal(self.mesh.crop, np.array([3, 2]))
+        self.mesh.crop = [5, 5]
+        np.testing.assert_equal(self.mesh.crop, np.array([5, 4]))
 
+    """
     def test_trim(self):
         self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
         self.mesh.crop = [3, 2]
