@@ -156,16 +156,18 @@ cdef class Mesh1DUniform(Mesh1D):
         self.__boundary_condition_2 = self.__solution[-1]
         self.__crop = np.array([0, 0])
     
-    # def inner_mesh_indices(self, mesh):
-    #     # assert isinstance(mesh, Mesh1D)
-    #     if mesh.is_inside_of(self):
-    #         local_start = self.to_local_coordinate(mesh.physical_boundary_1)
-    #         local_stop = self.to_local_coordinate(mesh.physical_boundary_2)
-    #         idx1 = np.where(abs(self.local_nodes - local_start) <= self.local_step / 2)[0][0]
-    #         idx2 = np.where(abs(self.local_nodes - local_stop) <= self.local_step / 2)[0][0]
-    #         return [idx1, idx2]
-    #     else:
-    #         return [None, None]
+    cpdef inner_mesh_indices(self, mesh):
+        cdef:
+            int idx1 = -1
+            int idx2 = -1
+            double local_start, local_stop, local_step
+        if mesh.is_inside_of(self):
+            local_start = self.to_local_coordinate(np.array([mesh.physical_boundary_1]))[0]
+            local_stop = self.to_local_coordinate(np.array([mesh.physical_boundary_2]))[0]
+            local_step = self.__calc_local_step()
+            idx1 = np.where(abs(np.asarray(self.__local_nodes) - local_start) <= local_step / 2)[0][0]
+            idx2 = np.where(abs(np.asarray(self.__local_nodes) - local_stop) <= local_step / 2)[0][0]
+        return idx1, idx2
     #
     # def is_aligned_with(self, mesh):
     #     assert isinstance(mesh, Mesh1DUniform)

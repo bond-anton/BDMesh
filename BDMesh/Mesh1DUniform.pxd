@@ -10,3 +10,4 @@ cdef class Mesh1DUniform(Mesh1D):
     cdef double __calc_physical_step(self)
 
     cpdef trim(self)
+    cpdef inner_mesh_indices(self, mesh)
