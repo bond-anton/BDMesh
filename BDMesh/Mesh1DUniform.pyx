@@ -5,7 +5,7 @@ from cpython.object cimport Py_EQ, Py_NE
 
 from libc.math cimport floor, ceil
 from .Mesh1D cimport Mesh1D
-# from ._helpers import check_if_integer
+from ._helpers cimport check_if_integer_c
 
 
 cdef class Mesh1DUniform(Mesh1D):
@@ -156,7 +156,7 @@ cdef class Mesh1DUniform(Mesh1D):
         self.__boundary_condition_2 = self.__solution[-1]
         self.__crop = np.array([0, 0])
     
-    cpdef inner_mesh_indices(self, mesh):
+    cpdef inner_mesh_indices(self, Mesh1D mesh):
         cdef:
             int idx1 = -1
             int idx2 = -1
@@ -168,20 +168,22 @@ cdef class Mesh1DUniform(Mesh1D):
             idx1 = np.where(abs(np.asarray(self.__local_nodes) - local_start) <= local_step / 2)[0][0]
             idx2 = np.where(abs(np.asarray(self.__local_nodes) - local_stop) <= local_step / 2)[0][0]
         return idx1, idx2
-    #
-    # def is_aligned_with(self, mesh):
-    #     assert isinstance(mesh, Mesh1DUniform)
-    #     min_step = min(mesh.physical_step, self.physical_step)
-    #     max_step = max(mesh.physical_step, self.physical_step)
-    #     step_ratio = max_step / min_step
-    #     if check_if_integer(step_ratio, 1e-8):
-    #         shift = abs(self.physical_boundary_1 - mesh.physical_boundary_1) / min_step
-    #         if check_if_integer(shift, 1e-8):
-    #             return True
-    #         return False
-    #     else:
-    #         return False
-    #
+
+    cpdef bint is_aligned_with(self,  Mesh1DUniform mesh):
+        cdef:
+            double min_step, max_step, step_ratio, shift
+            double threshold = 1.0e-8
+        min_step = min(mesh.physical_step, self.physical_step)
+        max_step = max(mesh.physical_step, self.physical_step)
+        step_ratio = max_step / min_step
+        if check_if_integer_c(step_ratio, &threshold):
+            shift = abs(self.physical_boundary_1 - mesh.physical_boundary_1) / min_step
+            if check_if_integer_c(shift, &threshold):
+                return True
+            return False
+        else:
+            return False
+
     # def merge_with(self, other, priority='self'):
     #     assert isinstance(other, Mesh1DUniform)
     #     if self.overlap_with(other):

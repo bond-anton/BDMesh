@@ -117,7 +117,7 @@ class TestMesh1DUniform(unittest.TestCase):
         inner = Mesh1D(3, 7)
         indices = self.mesh.inner_mesh_indices(inner)
         self.assertEqual(indices, (3, 7))
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(TypeError):
             self.mesh.inner_mesh_indices(1)
         inner = Mesh1DUniform(3, 17, physical_step=1.0)
         indices = self.mesh.inner_mesh_indices(inner)
@@ -129,7 +129,6 @@ class TestMesh1DUniform(unittest.TestCase):
         indices = self.mesh.inner_mesh_indices(inner)
         self.assertEqual(indices, (1, 10))
 
-    """
     def test_aligned(self):
         self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
         # check if aligned with equal mesh
@@ -150,8 +149,7 @@ class TestMesh1DUniform(unittest.TestCase):
             self.assertTrue(self.mesh.is_aligned_with(other))
             num = other.num - 1
             start += other.physical_step * 7
-        # check AssertionError
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(TypeError):
             self.mesh.is_aligned_with(1)
         # check if not aligned with mesh of same step but shifted by some offset value
         self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
@@ -163,6 +161,7 @@ class TestMesh1DUniform(unittest.TestCase):
         other = Mesh1DUniform(100, 110, physical_step=1.0 * coeff)
         self.assertFalse(self.mesh.is_aligned_with(other))
 
+    """
     def test_merge(self):
         # check merging with equal mesh
         self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
