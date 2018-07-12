@@ -1,6 +1,8 @@
 from __future__ import division, print_function
 import numpy as np
 
+from cpython.object cimport Py_EQ, Py_NE
+
 from libc.math cimport floor, ceil
 from .Mesh1D cimport Mesh1D
 # from ._helpers import check_if_integer
@@ -48,12 +50,34 @@ cdef class Mesh1DUniform(Mesh1D):
             self.__crop[1] = self.__num - self.__crop[0] - 2
         else:
             self.__crop[1] = int(crop[1])
+        self.__solution = np.zeros(self.__num, dtype=np.double)
+        self.__residual = np.zeros(self.__num, dtype=np.double)
 
     def __str__(self):
         return 'Mesh1DUniform: [%2.2g; %2.2g], %2.2g step, %d nodes' % (self.physical_boundary_1,
                                                                         self.physical_boundary_2,
                                                                         self.physical_step,
                                                                         self.num)
+
+    def __richcmp__(x, y, int op):
+        if op == Py_EQ:
+            if isinstance(x, Mesh1DUniform) and isinstance(y, Mesh1DUniform):
+                if x.physical_boundary_1 == y.physical_boundary_1:
+                    if x.physical_boundary_2 == y.physical_boundary_2:
+                        if x.local_nodes.size == y.local_nodes.size:
+                            if np.allclose(x.local_nodes, y.local_nodes):
+                                return True
+            return False
+        elif op == Py_NE:
+            if isinstance(x, Mesh1DUniform) and isinstance(y, Mesh1DUniform):
+                if x.physical_boundary_1 == y.physical_boundary_1:
+                    if x.physical_boundary_2 == y.physical_boundary_2:
+                        if x.local_nodes.size == y.local_nodes.size:
+                            if np.allclose(x.local_nodes, y.local_nodes):
+                                return False
+            return True
+        else:
+            return False
 
     @property
     def num(self):
@@ -67,9 +91,12 @@ cdef class Mesh1DUniform(Mesh1D):
             self.__num = num
         self.__local_nodes = np.linspace(0.0, 1.0, num=self.__num, endpoint=True)
 
+    cdef double __calc_local_step(self):
+        return 1.0 / (self.__num - 1)
+
     @property
     def local_step(self):
-        return 1.0 / (self.__num - 1)
+        return self.__calc_local_step()
 
     @local_step.setter
     def local_step(self, double local_step):
@@ -80,18 +107,21 @@ cdef class Mesh1DUniform(Mesh1D):
         else:
             self.num = int(1.0 / local_step) + 1
 
+    cdef double __calc_physical_step(self):
+        return self.__calc_local_step() * self.j()
+
     @property
     def physical_step(self):
-        return self.local_step * self.jacobian
+        return self.__calc_physical_step()
 
     @physical_step.setter
     def physical_step(self, double physical_step):
-        if physical_step > self.jacobian:
+        if physical_step > self.j():
             self.num = 2
         elif physical_step <= 0.0:
             self.num = 2
         else:
-            self.num = int(ceil(self.jacobian / physical_step)) + 1
+            self.num = int(ceil(self.j() / physical_step)) + 1
 
     @property
     def crop(self):
@@ -113,19 +143,19 @@ cdef class Mesh1DUniform(Mesh1D):
         else:
             self.__crop[1] = int(crop[1])
 
-    # def trim(self):
-    #     solution = self.solution[self.crop[0]:self.num-self.crop[1]]
-    #     residual = self.residual[self.crop[0]:self.num-self.crop[1]]
-    #     self.physical_boundary_1 += self.crop[0] * self.physical_step
-    #     self.physical_boundary_2 -= self.crop[1] * self.physical_step
-    #     num_points = int(np.ceil(self.num - np.sum(self.crop)))
-    #     self.local_nodes = np.linspace(0.0, 1.0, num=num_points, endpoint=True)
-    #     self.solution = solution
-    #     self.residual = residual
-    #     self.boundary_condition_1 = self.solution[0]
-    #     self.boundary_condition_2 = self.solution[-1]
-    #     self.crop = np.array([0, 0])
-    #
+    cpdef trim(self):
+        cdef:
+            double step = self.__calc_physical_step()
+        self.__solution = self.__solution[self.__crop[0]:self.__num - self.__crop[1]]
+        self.__residual = self.__residual[self.__crop[0]:self.__num - self.__crop[1]]
+        self.__physical_boundary_1 += self.__crop[0] * step
+        self.__physical_boundary_2 -= self.__crop[1] * step
+        self.__num = int(np.ceil(self.__num - self.__crop[0] - self.__crop[1]))
+        self.__local_nodes = np.linspace(0.0, 1.0, num=self.__num, endpoint=True)
+        self.__boundary_condition_1 = self.__solution[0]
+        self.__boundary_condition_2 = self.__solution[-1]
+        self.__crop = np.array([0, 0])
+    
     # def inner_mesh_indices(self, mesh):
     #     # assert isinstance(mesh, Mesh1D)
     #     if mesh.is_inside_of(self):

@@ -102,7 +102,6 @@ class TestMesh1DUniform(unittest.TestCase):
         self.mesh.crop = [5, 5]
         np.testing.assert_equal(self.mesh.crop, np.array([5, 4]))
 
-    """
     def test_trim(self):
         self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
         self.mesh.crop = [3, 2]
@@ -110,6 +109,7 @@ class TestMesh1DUniform(unittest.TestCase):
         trimmed = Mesh1DUniform(3, 8, physical_step=1.0)
         self.assertEqual(self.mesh, trimmed)
 
+    """
     def test_inner_mesh_indices(self):
         self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
         inner = Mesh1DUniform(3, 7, physical_step=1.0)
