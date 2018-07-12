@@ -143,7 +143,7 @@ cdef class Mesh1DUniform(Mesh1D):
         else:
             self.__crop[1] = int(crop[1])
 
-    cpdef trim(self):
+    cpdef void trim(self):
         cdef:
             double step = self.__calc_physical_step()
         self.__solution = self.__solution[self.__crop[0]:self.__num - self.__crop[1]]
@@ -184,44 +184,48 @@ cdef class Mesh1DUniform(Mesh1D):
         else:
             return False
 
-    # def merge_with(self, other, priority='self'):
-    #     assert isinstance(other, Mesh1DUniform)
-    #     if self.overlap_with(other):
-    #         if self.is_aligned_with(other):
-    #             if priority == 'self':
-    #                 tmp_mesh_1 = self.copy()
-    #                 tmp_mesh_2 = other.copy()
-    #             elif priority == 'other':
-    #                 tmp_mesh_1 = other.copy()
-    #                 tmp_mesh_2 = self.copy()
-    #             else:
-    #                 raise ValueError('Priority must be either "self" or "other"')
-    #             tmp_mesh_1.physical_step = self.physical_step
-    #             tmp_mesh_2.physical_step = self.physical_step
-    #             merged_physical_nodes, indices = np.unique(np.concatenate((tmp_mesh_1.physical_nodes,
-    #                                                                        tmp_mesh_2.physical_nodes)).round(12),
-    #                                                        return_index=True)
-    #             idx_1 = indices[np.where(indices < tmp_mesh_1.num)]
-    #             idx_2 = indices[np.where(indices >= tmp_mesh_1.num)] - tmp_mesh_1.num
-    #             solution = np.zeros(merged_physical_nodes.size)
-    #             solution[np.where(indices < tmp_mesh_1.num)] = tmp_mesh_1.solution[idx_1]
-    #             solution[np.where(indices >= tmp_mesh_1.num)] = tmp_mesh_2.solution[idx_2]
-    #             residual = np.zeros(merged_physical_nodes.size)
-    #             residual[np.where(indices < tmp_mesh_1.num)] = tmp_mesh_1.residual[idx_1]
-    #             residual[np.where(indices >= tmp_mesh_1.num)] = tmp_mesh_2.residual[idx_2]
-    #
-    #             if self.physical_boundary_1 + self.crop[0] > other.physical_boundary_1 + other.crop[0]:
-    #                 self.boundary_condition_1 = other.boundary_condition_1
-    #                 self.crop[0] = other.crop[0]
-    #                 self.physical_boundary_1 = other.physical_boundary_1
-    #             if self.physical_boundary_2 - self.crop[1] < other.physical_boundary_2 - other.crop[1]:
-    #                 self.boundary_condition_2 = other.boundary_condition_2
-    #                 self.crop[1] = other.crop[1]
-    #                 self.physical_boundary_2 = other.physical_boundary_2
-    #             self.physical_step = min(self.physical_step, other.physical_step)
-    #             self.solution = np.interp(self.physical_nodes, merged_physical_nodes, solution)
-    #             self.residual = np.interp(self.physical_nodes, merged_physical_nodes, residual)
-    #         else:
-    #             raise ValueError('meshes are not aligned')
-    #     else:
-    #         raise ValueError('meshes do not overlap')
+    cpdef void merge_with(self, Mesh1DUniform other, double threshold=1e-10, bint self_priority=True):
+        """
+        Merge mesh with another mesh
+        :param other: Mesh1D to merge with
+        :param threshold: threshold for nodes matching
+        :param self_priority: which solution and residual values are in priority ('self' or 'other')
+        :return:
+        """
+        if self.overlap_with(other):
+            if self.is_aligned_with(other):
+                if self_priority:
+                    tmp_mesh_1 = self.copy()
+                    tmp_mesh_2 = other.copy()
+                else:
+                    tmp_mesh_1 = other.copy()
+                    tmp_mesh_2 = self.copy()
+                tmp_mesh_1.physical_step = self.physical_step
+                tmp_mesh_2.physical_step = self.physical_step
+                merged_physical_nodes, indices = np.unique(np.concatenate((tmp_mesh_1.physical_nodes,
+                                                                           tmp_mesh_2.physical_nodes)).round(12),
+                                                           return_index=True)
+                idx_1 = indices[np.where(indices < tmp_mesh_1.num)]
+                idx_2 = indices[np.where(indices >= tmp_mesh_1.num)] - tmp_mesh_1.num
+                solution = np.zeros(merged_physical_nodes.size)
+                solution[np.where(indices < tmp_mesh_1.num)] = tmp_mesh_1.solution[idx_1]
+                solution[np.where(indices >= tmp_mesh_1.num)] = tmp_mesh_2.solution[idx_2]
+                residual = np.zeros(merged_physical_nodes.size)
+                residual[np.where(indices < tmp_mesh_1.num)] = tmp_mesh_1.residual[idx_1]
+                residual[np.where(indices >= tmp_mesh_1.num)] = tmp_mesh_2.residual[idx_2]
+
+                if self.physical_boundary_1 + self.crop[0] > other.physical_boundary_1 + other.crop[0]:
+                    self.boundary_condition_1 = other.boundary_condition_1
+                    self.crop[0] = other.crop[0]
+                    self.physical_boundary_1 = other.physical_boundary_1
+                if self.physical_boundary_2 - self.crop[1] < other.physical_boundary_2 - other.crop[1]:
+                    self.boundary_condition_2 = other.boundary_condition_2
+                    self.crop[1] = other.crop[1]
+                    self.physical_boundary_2 = other.physical_boundary_2
+                self.physical_step = min(self.physical_step, other.physical_step)
+                self.solution = np.interp(self.physical_nodes, merged_physical_nodes, solution)
+                self.residual = np.interp(self.physical_nodes, merged_physical_nodes, residual)
+            else:
+                raise ValueError('meshes are not aligned')
+        else:
+            raise ValueError('meshes do not overlap')

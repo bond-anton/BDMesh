@@ -9,6 +9,7 @@ cdef class Mesh1DUniform(Mesh1D):
     cdef double __calc_local_step(self)
     cdef double __calc_physical_step(self)
 
-    cpdef trim(self)
+    cpdef void trim(self)
     cpdef inner_mesh_indices(self, Mesh1D mesh)
     cpdef bint is_aligned_with(self, Mesh1DUniform mesh)
+    cpdef void merge_with(self, Mesh1DUniform other, double threshold=*, bint self_priority=*)

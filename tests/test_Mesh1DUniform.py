@@ -161,7 +161,6 @@ class TestMesh1DUniform(unittest.TestCase):
         other = Mesh1DUniform(100, 110, physical_step=1.0 * coeff)
         self.assertFalse(self.mesh.is_aligned_with(other))
 
-    """
     def test_merge(self):
         # check merging with equal mesh
         self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
@@ -209,4 +208,3 @@ class TestMesh1DUniform(unittest.TestCase):
         other = Mesh1DUniform(5, 15, physical_step=0.1)
         with self.assertRaises(ValueError):
             self.mesh.merge_with(other, priority='xxx')
-"""
