@@ -12,7 +12,7 @@ class TestTreeMesh1D(unittest.TestCase):
         self.tree = TreeMesh1D(self.root_mesh)
 
     def test_constructor(self):
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(TypeError):
             TreeMesh1D(1)
         self.assertEqual(self.tree.tree, {0: [self.root_mesh]})
         self.assertEqual(self.tree.levels, [0])
@@ -44,17 +44,16 @@ class TestTreeMesh1D(unittest.TestCase):
         self.assertEqual(mesh1.physical_boundary_1, 1)
         self.assertEqual(mesh1.physical_boundary_2, 17)
         # testing exceptions
-        with self.assertRaises(ValueError):
-            self.tree.add_mesh(mesh=mesh1, level=1.5)
-        with self.assertRaises(AssertionError):
+        self.tree.add_mesh(mesh=mesh1, level=1.5)
+        with self.assertRaises(TypeError):
             self.tree.add_mesh(mesh=mesh1, level='1')
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(TypeError):
             self.tree.add_mesh(mesh='a', level=1)
         # test mesh level search
         self.assertEqual(self.tree.get_mesh_level(self.root_mesh), 0)
         self.assertEqual(self.tree.get_mesh_level(mesh1), 1)
         self.assertEqual(self.tree.get_mesh_level(mesh4), -1)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(TypeError):
             self.tree.get_mesh_level(2)
 
     def test_get_children(self):
@@ -69,7 +68,7 @@ class TestTreeMesh1D(unittest.TestCase):
         children = self.tree.get_children(mesh)
         self.assertEqual(children, {2: [Mesh1D(1, 6)], 3: [Mesh1D(2, 3)]})
         # testing exceptions
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(TypeError):
             self.tree.get_children(mesh='a')
 
     def test_delete(self):
@@ -88,12 +87,10 @@ class TestTreeMesh1D(unittest.TestCase):
         self.assertEqual(children, {2: [Mesh1D(1, 6)], 3: [Mesh1D(2, 3), Mesh1D(4, 5)]})
         self.tree.del_mesh(Mesh1D(1, 6))
         self.assertEqual(self.tree.tree, {0: [self.root_mesh], 1: [Mesh1D(1, 7)]})
-        # check if exceptions are raised
-        with self.assertRaises(ValueError):
-            self.tree.del_mesh(self.root_mesh)
-        with self.assertRaises(ValueError):
-            self.tree.del_mesh(Mesh1D(100, 110))
-        with self.assertRaises(AssertionError):
+
+        self.assertFalse(self.tree.del_mesh(self.root_mesh))
+        self.assertFalse(self.tree.del_mesh(Mesh1D(100, 110)))
+        with self.assertRaises(TypeError):
             self.tree.del_mesh(1)
 
     def test_remove_coarse_duplicates(self):
