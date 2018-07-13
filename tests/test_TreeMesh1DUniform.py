@@ -9,10 +9,10 @@ class TestTreeMesh1DUniform(unittest.TestCase):
 
     def setUp(self):
         self.root_mesh = Mesh1DUniform(0.0, 10.0, physical_step=1.0)
-        self.tree = TreeMesh1DUniform(self.root_mesh, refinement_coefficient=2, aligned=True, crop=None)
+        self.tree = TreeMesh1DUniform(self.root_mesh, refinement_coefficient=2, aligned=True)
 
     def test_constructor(self):
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(TypeError):
             TreeMesh1DUniform(1)
         self.assertEqual(self.tree.tree, {0: [self.root_mesh]})
         self.assertEqual(self.tree.levels, [0])
@@ -32,7 +32,7 @@ class TestTreeMesh1DUniform(unittest.TestCase):
         self.assertEqual(self.tree.tree, {0: [self.root_mesh],
                                           1: [Mesh1DUniform(1, 8, physical_step=0.25)],
                                           2: [Mesh1DUniform(2, 10, physical_step=0.125)]})
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(TypeError):
             self.tree.refinement_coefficient = 'a'
 
     def test_aligned(self):
@@ -44,11 +44,10 @@ class TestTreeMesh1DUniform(unittest.TestCase):
         self.tree.aligned = False
         self.assertFalse(self.tree.aligned)
         self.tree.add_mesh(mesh=Mesh1DUniform(1.3, 8.3, physical_step=0.5))
-        with self.assertRaises(ValueError):
-            self.tree.aligned = True
+        self.tree.aligned = True
         self.assertFalse(self.tree.aligned)
-        with self.assertRaises(AssertionError):
-            self.tree.aligned = 'a'
+        self.tree.aligned = 'a'
+        self.assertFalse(self.tree.aligned)
 
     def test_crop(self):
         np.testing.assert_equal(self.tree.crop, np.array([0, 0]))
@@ -56,18 +55,18 @@ class TestTreeMesh1DUniform(unittest.TestCase):
         np.testing.assert_equal(self.tree.crop, np.array([3, 2]))
         with self.assertRaises(TypeError):
             self.tree.crop = 1
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             self.tree.crop = 'ab'
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             self.tree.crop = 'abc'
-        with self.assertRaises(ValueError):
-            self.tree.crop = [1, 2, 3]
-        with self.assertRaises(ValueError):
-            self.tree.crop = [5, 5]
-        with self.assertRaises(ValueError):
-            self.tree.crop = [-1, 1]
-        with self.assertRaises(ValueError):
-            self.tree.crop = [1, -1]
+        self.tree.crop = [1, 2, 3]
+        np.testing.assert_equal(self.tree.crop, np.array([1, 2]))
+        self.tree.crop = [5, 5]
+        np.testing.assert_equal(self.tree.crop, np.array([5, 4]))
+        self.tree.crop = [-1, 1]
+        np.testing.assert_equal(self.tree.crop, np.array([0, 1]))
+        self.tree.crop = [1, -1]
+        np.testing.assert_equal(self.tree.crop, np.array([1, 0]))
         self.tree.crop = (4.0, 1)
         np.testing.assert_equal(self.tree.crop, np.array([4, 1]))
         self.tree.crop = np.array([3.0, 3])
@@ -81,18 +80,16 @@ class TestTreeMesh1DUniform(unittest.TestCase):
         mesh1 = Mesh1DUniform(2, 10, physical_step=0.25)
         self.tree.add_mesh(mesh=mesh1)
         self.assertEqual(self.tree.tree, {0: [self.root_mesh], 1: [mesh], 2: [mesh1]})
-        # testing exceptions
-        with self.assertRaises(ValueError):
-            self.tree.add_mesh(mesh=Mesh1DUniform(1.3, 8.3, physical_step=0.5))
-        with self.assertRaises(ValueError):
-            self.tree.add_mesh(mesh=Mesh1DUniform(1, 8, physical_step=0.33))
-        with self.assertRaises(AssertionError):
+        # testing bad values
+        self.assertFalse(self.tree.add_mesh(mesh=Mesh1DUniform(1.3, 8.3, physical_step=0.5)))
+        self.assertFalse(self.tree.add_mesh(mesh=Mesh1DUniform(1, 8, physical_step=0.33)))
+        with self.assertRaises(TypeError):
             self.tree.add_mesh(mesh='a', level=1)
 
     def test_loop_refinement(self):
         # adding refinement meshes in a loop
         mesh = Mesh1DUniform(0.0, 2.0, physical_step=0.1)
-        self.tree = TreeMesh1DUniform(mesh, refinement_coefficient=2, aligned=True, crop=None)
+        self.tree = TreeMesh1DUniform(mesh, refinement_coefficient=2, aligned=True)
         for i in range(5):
             try:
                 mesh = Mesh1DUniform(0.2, 1.1, physical_step=mesh.physical_step / self.tree.refinement_coefficient)

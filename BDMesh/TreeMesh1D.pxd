@@ -7,7 +7,7 @@ cdef class TreeMesh1D(object):
     cdef:
         dict __tree
 
-    cpdef void add_mesh(self, Mesh1D mesh, int level)
+    cpdef bint add_mesh(self, Mesh1D mesh, int level=*)
     cpdef int get_mesh_level(self, Mesh1D mesh)
     cpdef dict get_children(self, Mesh1D mesh)
     cpdef bint del_mesh(self, Mesh1D mesh)

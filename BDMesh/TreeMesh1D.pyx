@@ -30,7 +30,7 @@ cdef class TreeMesh1D(object):
     def root_mesh(self):
         return self.__tree[0][0]
 
-    cpdef void add_mesh(self, Mesh1D mesh, int level):
+    cpdef bint add_mesh(self, Mesh1D mesh, int level=0):
         cdef:
             list levels = list(self.__tree.keys())
         if level in levels:
@@ -38,6 +38,7 @@ cdef class TreeMesh1D(object):
         else:
             self.__tree[level] = [mesh]
         self.cleanup()
+        return True
 
     cpdef int get_mesh_level(self, Mesh1D mesh):
         cdef:
