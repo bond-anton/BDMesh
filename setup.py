@@ -48,13 +48,14 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
 
     keywords='Mesh',
 
     packages=find_packages(exclude=['demo', 'tests', 'docs', 'contrib', 'venv']),
     ext_modules=cythonize('BDMesh/*.pyx'),
-    install_requires=['numpy'],
+    install_requires=['numpy', 'Cython'],
     test_suite='nose.collector',
     tests_require=['nose']
 )
