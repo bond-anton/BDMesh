@@ -12,4 +12,3 @@ cdef class Mesh1DUniform(Mesh1D):
     cpdef void trim(self)
     cpdef inner_mesh_indices(self, Mesh1D mesh)
     cpdef bint is_aligned_with(self, Mesh1DUniform mesh)
-    cpdef void merge_with(self, Mesh1DUniform other, double threshold=*, bint self_priority=*)

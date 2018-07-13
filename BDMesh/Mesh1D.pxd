@@ -13,4 +13,4 @@ cdef class Mesh1D:
     cdef double int_res(self)
     cpdef bint is_inside_of(self, Mesh1D mesh)
     cpdef bint overlap_with(self, Mesh1D mesh)
-    cpdef void merge_with(self, Mesh1D other, double threshold=*, bint self_priority=*)
+    cpdef bint merge_with(self, Mesh1D other, double threshold=*, bint self_priority=*)

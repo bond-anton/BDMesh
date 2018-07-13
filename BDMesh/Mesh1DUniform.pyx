@@ -3,9 +3,9 @@ import numpy as np
 
 from cpython.object cimport Py_EQ, Py_NE
 
-from libc.math cimport floor, ceil
+from libc.math cimport floor, ceil, round
 from .Mesh1D cimport Mesh1D
-from ._helpers cimport check_if_integer_c
+from ._helpers cimport check_if_integer_c, interp_1d
 
 
 cdef class Mesh1DUniform(Mesh1D):
@@ -35,7 +35,7 @@ cdef class Mesh1DUniform(Mesh1D):
             else:
                 self.__num = num
         else:
-            self.__num = int(floor(abs(physical_boundary_2 - physical_boundary_1) / physical_step)) + 1
+            self.__num = int(round(abs(physical_boundary_2 - physical_boundary_1) / physical_step)) + 1
         self.__local_nodes = np.linspace(0.0, 1.0, num=self.__num, endpoint=True)
         if crop[0] <= 0:
             self.__crop[0] = 0
@@ -85,11 +85,17 @@ cdef class Mesh1DUniform(Mesh1D):
 
     @num.setter
     def num(self, int num):
+        cdef:
+            double[:] old_nodes = self.to_physical(self.__local_nodes)
+            double[:] new_nodes
         if num < 2:
             self.__num = 2
         else:
             self.__num = num
         self.__local_nodes = np.linspace(0.0, 1.0, num=self.__num, endpoint=True)
+        new_nodes = self.to_physical(self.__local_nodes)
+        self.__solution = interp_1d(new_nodes, old_nodes, self.__solution)
+        self.__residual = interp_1d(new_nodes, old_nodes, self.__residual)
 
     cdef double __calc_local_step(self):
         return 1.0 / (self.__num - 1)
@@ -121,7 +127,7 @@ cdef class Mesh1DUniform(Mesh1D):
         elif physical_step <= 0.0:
             self.num = 2
         else:
-            self.num = int(ceil(self.j() / physical_step)) + 1
+            self.num = int(round(self.j() / physical_step)) + 1
 
     @property
     def crop(self):
@@ -184,7 +190,7 @@ cdef class Mesh1DUniform(Mesh1D):
         else:
             return False
 
-    cpdef void merge_with(self, Mesh1DUniform other, double threshold=1e-10, bint self_priority=True):
+    cpdef bint merge_with(self, Mesh1D other, double threshold=1e-10, bint self_priority=True):
         """
         Merge mesh with another mesh
         :param other: Mesh1D to merge with
@@ -192,40 +198,53 @@ cdef class Mesh1DUniform(Mesh1D):
         :param self_priority: which solution and residual values are in priority ('self' or 'other')
         :return:
         """
-        if self.overlap_with(other):
-            if self.is_aligned_with(other):
-                if self_priority:
-                    tmp_mesh_1 = self.copy()
-                    tmp_mesh_2 = other.copy()
-                else:
-                    tmp_mesh_1 = other.copy()
-                    tmp_mesh_2 = self.copy()
-                tmp_mesh_1.physical_step = self.physical_step
-                tmp_mesh_2.physical_step = self.physical_step
-                merged_physical_nodes, indices = np.unique(np.concatenate((tmp_mesh_1.physical_nodes,
-                                                                           tmp_mesh_2.physical_nodes)).round(12),
-                                                           return_index=True)
-                idx_1 = indices[np.where(indices < tmp_mesh_1.num)]
-                idx_2 = indices[np.where(indices >= tmp_mesh_1.num)] - tmp_mesh_1.num
-                solution = np.zeros(merged_physical_nodes.size)
-                solution[np.where(indices < tmp_mesh_1.num)] = tmp_mesh_1.solution[idx_1]
-                solution[np.where(indices >= tmp_mesh_1.num)] = tmp_mesh_2.solution[idx_2]
-                residual = np.zeros(merged_physical_nodes.size)
-                residual[np.where(indices < tmp_mesh_1.num)] = tmp_mesh_1.residual[idx_1]
-                residual[np.where(indices >= tmp_mesh_1.num)] = tmp_mesh_2.residual[idx_2]
-
-                if self.physical_boundary_1 + self.crop[0] > other.physical_boundary_1 + other.crop[0]:
-                    self.boundary_condition_1 = other.boundary_condition_1
-                    self.crop[0] = other.crop[0]
-                    self.physical_boundary_1 = other.physical_boundary_1
-                if self.physical_boundary_2 - self.crop[1] < other.physical_boundary_2 - other.crop[1]:
-                    self.boundary_condition_2 = other.boundary_condition_2
-                    self.crop[1] = other.crop[1]
-                    self.physical_boundary_2 = other.physical_boundary_2
-                self.physical_step = min(self.physical_step, other.physical_step)
-                self.solution = np.interp(self.physical_nodes, merged_physical_nodes, solution)
-                self.residual = np.interp(self.physical_nodes, merged_physical_nodes, residual)
-            else:
-                raise ValueError('meshes are not aligned')
+        cdef:
+            double inner_pb1, inner_pb2, new_pb1, new_pb2
+            double physical_step = self.physical_step
+            double[:] new_sol, new_res
+            int new_num, id1_1, id1_2, id2_1, id2_2, new_id1, new_id2
+        if not self.overlap_with(other):
+            return False
+        if not self.is_aligned_with(other):
+            return False
+        if abs(physical_step - other.physical_step) > threshold:
+            return False
+        if self.__physical_boundary_1 < other.__physical_boundary_1:
+            inner_pb1 = other.__physical_boundary_1
+            new_pb1 = self.__physical_boundary_1
+            id2_1 = 0
+            id1_1 = int(round((inner_pb1 - new_pb1) / physical_step))
+            new_id1 = id1_1
         else:
-            raise ValueError('meshes do not overlap')
+            inner_pb1 = self.__physical_boundary_1
+            new_pb1 = other.__physical_boundary_1
+            id1_1 = 0
+            id2_1 = int(round((inner_pb1 - new_pb1) / physical_step))
+            new_id1 = id2_1
+        if self.__physical_boundary_2 > other.__physical_boundary_2:
+            inner_pb2 = other.__physical_boundary_2
+            new_pb2 = self.__physical_boundary_2
+            id2_2 = other.num - 1
+            id1_2 = self.num - int(round((new_pb2 - inner_pb2) / physical_step)) - 1
+        else:
+            inner_pb2 = self.__physical_boundary_2
+            new_pb2 = other.__physical_boundary_2
+            id1_2 = self.num - 1
+            id2_2 = other.num - int(round((new_pb2 - inner_pb2) / physical_step)) - 1
+        new_id2 = new_id1 + int(round((inner_pb2 - inner_pb1) / physical_step))
+        new_num = int(round((new_pb2 - new_pb1) / physical_step)) + 1
+        new_sol = np.zeros(new_num, dtype=np.double)
+        new_res = np.zeros(new_num, dtype=np.double)
+        if self_priority:
+            new_sol[new_id1:new_id2] = self.__solution[id1_1:id1_2]
+            new_res[new_id1:new_id2] = self.__residual[id1_1:id1_2]
+        else:
+            new_sol[new_id1:new_id2] = other.__solution[id2_1:id2_2]
+            new_res[new_id1:new_id2] = other.__residual[id2_1:id2_2]
+        self.__num = new_num
+        self.__local_nodes = np.linspace(0.0, 1.0, num=new_num, endpoint=True)
+        self.__physical_boundary_1 = new_pb1
+        self.__physical_boundary_2 = new_pb2
+        self.__solution = new_sol
+        self.__residual = new_res
+        return True
