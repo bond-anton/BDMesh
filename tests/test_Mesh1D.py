@@ -1,5 +1,4 @@
 from __future__ import division, print_function
-from copy import copy, deepcopy
 import math as m
 import numpy as np
 import unittest
@@ -21,20 +20,11 @@ class TestMesh1D(unittest.TestCase):
         self.assertNotEqual(self.mesh, other_mesh)
         other_mesh = Mesh1D(3 * m.pi, m.pi)
         self.assertNotEqual(self.mesh, other_mesh)
-        with self.assertRaises(AssertionError):
-            print(self.mesh == 'a')
+        self.assertNotEqual(self.mesh, 'a')
         self.assertEqual(str(self.mesh),
                          'Mesh1D: [%2.2g; %2.2g], %d nodes' % (self.mesh.physical_boundary_1,
                                                                self.mesh.physical_boundary_2,
                                                                self.mesh.num))
-
-    def test_copy(self):
-        mesh_copy = self.mesh.copy()
-        self.assertEqual(self.mesh, mesh_copy)
-        mesh_copy = copy(self.mesh)
-        self.assertEqual(self.mesh, mesh_copy)
-        mesh_copy = deepcopy(self.mesh)
-        self.assertEqual(self.mesh, mesh_copy)
 
     def test_physical_boundaries(self):
         self.assertEqual(self.mesh.physical_boundary_1, m.pi)
@@ -49,9 +39,9 @@ class TestMesh1D(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.mesh.physical_boundary_2 = -3.1
         self.assertEqual(self.mesh.jacobian, 2.0)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(TypeError):
             self.mesh.physical_boundary_1 = 'a'
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(TypeError):
             self.mesh.physical_boundary_2 = 'b'
 
     def test_local_nodes(self):
@@ -61,35 +51,37 @@ class TestMesh1D(unittest.TestCase):
         self.assertEqual(self.mesh.num, 3)
         with self.assertRaises(TypeError):
             self.mesh.local_nodes = 1
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             self.mesh.local_nodes = 'a'
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             self.mesh.local_nodes = 'aa'
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             self.mesh.local_nodes = [1.0, 2.0]
         with self.assertRaises(ValueError):
-            self.mesh.local_nodes = [1e-14, 1.0]
+            self.mesh.local_nodes = np.array([1.0, 2.0])
+        with self.assertRaises(ValueError):
+            self.mesh.local_nodes = np.array([1e-14, 1.0])
         with self.assertRaises(AttributeError):
             self.mesh.num = 4
         self.assertEqual(self.mesh.num, 3)
         np.testing.assert_equal(self.mesh.physical_nodes, np.array([m.pi, 1.5 * m.pi, 2 * m.pi]))
 
     def test_coordinate_conversion(self):
-        self.assertEqual(self.mesh.to_physical_coordinate(0.5), 1.5 * m.pi)
-        self.assertEqual(self.mesh.to_local_coordinate(1.5 * m.pi), 0.5)
+        self.assertEqual(self.mesh.to_physical_coordinate(np.array([0.5])), np.array([1.5 * m.pi]))
+        self.assertEqual(self.mesh.to_local_coordinate(np.array([1.5 * m.pi])), np.array([0.5]))
 
     def test_boundary_conditions(self):
-        self.assertIsNone(self.mesh.boundary_condition_1)
-        self.assertIsNone(self.mesh.boundary_condition_2)
+        self.assertEqual(self.mesh.boundary_condition_1, 0.0)
+        self.assertEqual(self.mesh.boundary_condition_2, 0.0)
         self.mesh.boundary_condition_1 = 3.0
         self.assertEqual(self.mesh.boundary_condition_1, 3.0)
         self.mesh.boundary_condition_1 = 1
         self.assertEqual(self.mesh.boundary_condition_1, 1.0)
-        self.mesh.boundary_condition_1 = None
-        self.assertIsNone(self.mesh.boundary_condition_1)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
+            self.mesh.boundary_condition_1 = None
+        with self.assertRaises(TypeError):
             self.mesh.boundary_condition_1 = 'a'
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             self.mesh.boundary_condition_2 = 'a'
 
     def test_solution_residual(self):
@@ -105,10 +97,14 @@ class TestMesh1D(unittest.TestCase):
             self.mesh.solution = 1
         with self.assertRaises(TypeError):
             self.mesh.residual = 1
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             self.mesh.solution = [1.0]
         with self.assertRaises(ValueError):
+            self.mesh.solution = np.array([1.0])
+        with self.assertRaises(TypeError):
             self.mesh.residual = [1.0]
+        with self.assertRaises(ValueError):
+            self.mesh.residual = np.array([1.0])
         self.assertEqual(self.mesh.integrational_residual, np.trapz(self.mesh.residual, self.mesh.physical_nodes))
 
     def test_local_f(self):
@@ -137,7 +133,7 @@ class TestMesh1D(unittest.TestCase):
         other = Mesh1D(1.1 * m.pi, 1.9 * m.pi)
         self.assertFalse(self.mesh.is_inside_of(other))
         self.assertTrue(other.is_inside_of(self.mesh))
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(TypeError):
             self.mesh.is_inside_of('x')
 
     def test_overlap(self):
@@ -168,7 +164,7 @@ class TestMesh1D(unittest.TestCase):
         other = Mesh1D(2.01 * m.pi, 3.0 * m.pi)
         self.assertFalse(self.mesh.overlap_with(other))
         self.assertFalse(other.overlap_with(self.mesh))
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(TypeError):
             self.mesh.overlap_with('x')
 
     def test_merge(self):
@@ -246,7 +242,7 @@ class TestMesh1D(unittest.TestCase):
         self.mesh.local_nodes = np.linspace(0, 1, num=11)
         other = Mesh1D(5, 15)
         other.local_nodes = np.linspace(0, 1, num=11)
-        self.mesh.merge_with(other, priority='self')
+        self.mesh.merge_with(other, self_priority=True)
         merged = Mesh1D(0, 15)
         merged.local_nodes = np.linspace(0, 1, num=16)
         self.assertEqual(self.mesh, merged)
@@ -255,7 +251,7 @@ class TestMesh1D(unittest.TestCase):
         self.mesh.local_nodes = np.linspace(0, 1, num=11)
         other = Mesh1D(5, 15)
         other.local_nodes = np.linspace(0, 1, num=11)
-        self.mesh.merge_with(other, priority='other')
+        self.mesh.merge_with(other, self_priority=False)
         merged = Mesh1D(0, 15)
         merged.local_nodes = np.linspace(0, 1, num=16)
         self.assertEqual(self.mesh, merged)
@@ -265,8 +261,8 @@ class TestMesh1D(unittest.TestCase):
         other = Mesh1D(5, 15)
         other.local_nodes = np.linspace(0, 1, num=11)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             self.mesh.merge_with(other, priority='xxx')
 
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(TypeError):
             self.mesh.merge_with('x')

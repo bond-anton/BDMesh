@@ -21,8 +21,6 @@ class TestMesh1DUniform(unittest.TestCase):
         self.assertNotEqual(self.mesh, other_mesh)
         other_mesh = Mesh1DUniform(3 * m.pi, m.pi)
         self.assertNotEqual(self.mesh, other_mesh)
-        with self.assertRaises(AssertionError):
-            self.mesh == 'a'
         self.assertEqual(str(self.mesh),
                          'Mesh1DUniform: [%2.2g; %2.2g], %2.2g step, %d nodes' % (self.mesh.physical_boundary_1,
                                                                                   self.mesh.physical_boundary_2,
@@ -35,18 +33,16 @@ class TestMesh1DUniform(unittest.TestCase):
     def test_physical_step(self):
         self.mesh = Mesh1DUniform(0, 10, physical_step=1.0, num=100)
         self.assertEqual(self.mesh.physical_step, 1.0)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(TypeError):
             self.mesh.physical_step = 'a'
         self.mesh.physical_step = 1.1
         self.assertNotEqual(self.mesh.physical_step, 1.1)
-        with self.assertRaises(ValueError):
-            self.mesh.physical_step = 0
         self.mesh.physical_step = self.mesh.jacobian
         self.assertEqual(self.mesh.physical_step, self.mesh.jacobian)
         self.mesh.physical_step = 1.1 * self.mesh.jacobian
         self.assertEqual(self.mesh.physical_step, self.mesh.jacobian)
         self.mesh.physical_step = -1.0
-        self.assertEqual(self.mesh.physical_step, 1.0)
+        self.assertEqual(self.mesh.physical_step, 10.0)
 
     def test_local_step(self):
         self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
@@ -55,65 +51,56 @@ class TestMesh1DUniform(unittest.TestCase):
         self.assertEqual(self.mesh.local_step, 0.05)
         self.mesh.local_step = 0.053
         self.assertNotEqual(self.mesh.local_step, 0.053)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(TypeError):
             self.mesh.local_step = 'a'
         self.mesh.local_step = 1
         self.assertEqual(self.mesh.local_step, 1)
-        with self.assertRaises(ValueError):
-            self.mesh.local_step = 0
         self.mesh.local_step = 2
         self.assertEqual(self.mesh.local_step, 1)
         self.mesh.local_step = -2
         self.assertEqual(self.mesh.local_step, 1)
         self.mesh.local_step = -0.5
-        self.assertEqual(self.mesh.local_step, 0.5)
+        self.assertEqual(self.mesh.local_step, 1.0)
 
     def test_num(self):
         self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
         self.assertEqual(self.mesh.num, 11)
         self.mesh.num = 12
         self.assertEqual(self.mesh.num, 12)
-        with self.assertRaises(ValueError):
-            self.mesh.num = 1e-5
-        with self.assertRaises(ValueError):
-            self.mesh.num = 1
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             self.mesh.num = 'a'
-        self.mesh.num = None
-        self.assertEqual(self.mesh.num, 2)
+        with self.assertRaises(TypeError):
+            self.mesh.num = None
+        self.assertEqual(self.mesh.num, 12)
         self.mesh.num = 2 + 1e-11
+        self.assertEqual(self.mesh.num, 2)
+        self.mesh.num = 2.8
         self.assertEqual(self.mesh.num, 2)
         self.mesh.num = 2
         self.assertEqual(self.mesh.num, 2)
-        with self.assertRaises(ValueError):
-            self.mesh.num = -1
-        with self.assertRaises(ValueError):
-            self.mesh.num = -2
 
     def test_crop(self):
         self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
         self.mesh.crop = [3, 2]
         np.testing.assert_equal(self.mesh.crop, np.array([3, 2]))
-        self.mesh.crop = None
-        np.testing.assert_equal(self.mesh.crop, np.array([0, 0]))
         self.mesh.crop = [0, 0]
         np.testing.assert_equal(self.mesh.crop, np.array([0, 0]))
         self.mesh.crop = [3, 2]
         np.testing.assert_equal(self.mesh.crop, np.array([3, 2]))
         with self.assertRaises(TypeError):
             self.mesh.crop = 3
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             self.mesh.crop = 'a'
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             self.mesh.crop = 'ab'
-        with self.assertRaises(ValueError):
-            self.mesh.crop = [-3, 2]
-        with self.assertRaises(ValueError):
-            self.mesh.crop = [3, -2]
-        with self.assertRaises(ValueError):
-            self.mesh.crop = [3, 2, 1]
-        with self.assertRaises(ValueError):
-            self.mesh.crop = [5, 5]
+        self.mesh.crop = [-3, 2]
+        np.testing.assert_equal(self.mesh.crop, np.array([0, 2]))
+        self.mesh.crop = [3, -2]
+        np.testing.assert_equal(self.mesh.crop, np.array([3, 0]))
+        self.mesh.crop = [3, 2, 1]
+        np.testing.assert_equal(self.mesh.crop, np.array([3, 2]))
+        self.mesh.crop = [5, 5]
+        np.testing.assert_equal(self.mesh.crop, np.array([5, 4]))
 
     def test_trim(self):
         self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
@@ -126,21 +113,21 @@ class TestMesh1DUniform(unittest.TestCase):
         self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
         inner = Mesh1DUniform(3, 7, physical_step=1.0)
         indices = self.mesh.inner_mesh_indices(inner)
-        self.assertEqual(indices, [3, 7])
+        self.assertEqual(indices, (3, 7))
         inner = Mesh1D(3, 7)
         indices = self.mesh.inner_mesh_indices(inner)
-        self.assertEqual(indices, [3, 7])
-        with self.assertRaises(AssertionError):
+        self.assertEqual(indices, (3, 7))
+        with self.assertRaises(TypeError):
             self.mesh.inner_mesh_indices(1)
         inner = Mesh1DUniform(3, 17, physical_step=1.0)
         indices = self.mesh.inner_mesh_indices(inner)
-        self.assertEqual(indices, [None, None])
+        self.assertEqual(indices, (-1, -1))
         inner = Mesh1DUniform(-3, 17, physical_step=1.0)
         indices = self.mesh.inner_mesh_indices(inner)
-        self.assertEqual(indices, [None, None])
+        self.assertEqual(indices, (-1, -1))
         inner = Mesh1DUniform(0.55, 9.55, physical_step=1.0)
         indices = self.mesh.inner_mesh_indices(inner)
-        self.assertEqual(indices, [1, 10])
+        self.assertEqual(indices, (1, 10))
 
     def test_aligned(self):
         self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
@@ -162,8 +149,7 @@ class TestMesh1DUniform(unittest.TestCase):
             self.assertTrue(self.mesh.is_aligned_with(other))
             num = other.num - 1
             start += other.physical_step * 7
-        # check AssertionError
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(TypeError):
             self.mesh.is_aligned_with(1)
         # check if not aligned with mesh of same step but shifted by some offset value
         self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
@@ -179,7 +165,7 @@ class TestMesh1DUniform(unittest.TestCase):
         # check merging with equal mesh
         self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
         other = Mesh1DUniform(0, 10, physical_step=1.0)
-        self.mesh.merge_with(other)
+        self.assertTrue(self.mesh.merge_with(other))
         self.assertEqual(self.mesh, other)
         # check mearging with floating point step mesh
         for step_coeff in range(1, 5):
@@ -188,7 +174,8 @@ class TestMesh1DUniform(unittest.TestCase):
             start = -5
             for i in range(1, 5):
                 other = Mesh1DUniform(start, start + 10, num=step_coeff * num + 1)
-                self.mesh.merge_with(other)
+                self.mesh.physical_step = other.physical_step
+                self.assertTrue(self.mesh.merge_with(other))
                 merged = Mesh1DUniform(min(self.mesh.physical_boundary_1, start),
                                        max(self.mesh.physical_boundary_2, start + 10),
                                        physical_step=other.physical_step)
@@ -198,28 +185,21 @@ class TestMesh1DUniform(unittest.TestCase):
                 self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
         # check merging with not overlapping mesh
         self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
-        with self.assertRaises(ValueError):
-            self.mesh.merge_with(Mesh1DUniform(11, 21, physical_step=1.0))
-        # check merging with not aligned mesh
+        self.assertFalse(self.mesh.merge_with(Mesh1DUniform(11, 21, physical_step=1.0)))
         self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)
-        with self.assertRaises(ValueError):
-            self.mesh.merge_with(Mesh1DUniform(5, 15, physical_step=0.6))
-        # check AssertionError
-        with self.assertRaises(AssertionError):
-            self.mesh.merge_with(1)
+        self.assertFalse(self.mesh.merge_with(Mesh1DUniform(5, 15, physical_step=0.6)))
         # test priority of meshes
         self.mesh = Mesh1DUniform(0, 10, physical_step=0.1)
         other = Mesh1DUniform(5, 15, physical_step=0.1)
-        self.mesh.merge_with(other, priority='self')
+        self.assertTrue(self.mesh.merge_with(other, self_priority=True))
         merged = Mesh1DUniform(0, 15, physical_step=0.1)
         self.assertEqual(self.mesh, merged)
         self.mesh = Mesh1DUniform(0, 10, physical_step=0.1)
         other = Mesh1DUniform(5, 15, physical_step=0.1)
-        self.mesh.merge_with(other, priority='other')
+        self.assertTrue(self.mesh.merge_with(other, self_priority=False))
         merged = Mesh1DUniform(0, 15, physical_step=0.1)
         self.assertEqual(self.mesh, merged)
         self.mesh = Mesh1DUniform(0, 10, physical_step=0.1)
         other = Mesh1DUniform(5, 15, physical_step=0.1)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             self.mesh.merge_with(other, priority='xxx')
-
