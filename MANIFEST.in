@@ -8,6 +8,10 @@ include NOTICE.txt
 # Include README
 include README.md
 
+# Include Cython sources
+recursive-include BDMesh *.pyx
+recursive-include BDMesh *.pxd
+
 recursive-exclude build *
 recursive-exclude dist *
 recursive-exclude tools *
