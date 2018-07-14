@@ -144,6 +144,5 @@ class TestTreeMesh1D(unittest.TestCase):
         self.assertEqual(self.tree.levels, [0, 1, 5])
         # adding overlapping meshes
         self.tree.tree[0] = None
-        print(self.tree.tree)
         self.tree.recalculate_levels()
         self.assertEqual(self.tree.tree, {0: [mesh1, mesh2], 4: [mesh3]})

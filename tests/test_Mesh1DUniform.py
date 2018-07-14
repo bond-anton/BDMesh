@@ -89,10 +89,6 @@ class TestMesh1DUniform(unittest.TestCase):
         np.testing.assert_equal(self.mesh.crop, np.array([3, 2]))
         with self.assertRaises(TypeError):
             self.mesh.crop = 3
-        with self.assertRaises(TypeError):
-            self.mesh.crop = 'a'
-        with self.assertRaises(TypeError):
-            self.mesh.crop = 'ab'
         self.mesh.crop = [-3, 2]
         np.testing.assert_equal(self.mesh.crop, np.array([0, 2]))
         self.mesh.crop = [3, -2]

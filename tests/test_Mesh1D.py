@@ -52,10 +52,6 @@ class TestMesh1D(unittest.TestCase):
         with self.assertRaises(TypeError):
             self.mesh.local_nodes = 1
         with self.assertRaises(TypeError):
-            self.mesh.local_nodes = 'a'
-        with self.assertRaises(TypeError):
-            self.mesh.local_nodes = 'aa'
-        with self.assertRaises(TypeError):
             self.mesh.local_nodes = [1.0, 2.0]
         with self.assertRaises(ValueError):
             self.mesh.local_nodes = np.array([1.0, 2.0])

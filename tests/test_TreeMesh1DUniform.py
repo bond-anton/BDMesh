@@ -55,10 +55,6 @@ class TestTreeMesh1DUniform(unittest.TestCase):
         np.testing.assert_equal(self.tree.crop, np.array([3, 2]))
         with self.assertRaises(TypeError):
             self.tree.crop = 1
-        with self.assertRaises(TypeError):
-            self.tree.crop = 'ab'
-        with self.assertRaises(TypeError):
-            self.tree.crop = 'abc'
         self.tree.crop = [1, 2, 3]
         np.testing.assert_equal(self.tree.crop, np.array([1, 2]))
         self.tree.crop = [5, 5]
