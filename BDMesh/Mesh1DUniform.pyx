@@ -220,12 +220,12 @@ cdef class Mesh1DUniform(Mesh1D):
         else:
             inner_pb1 = self.__physical_boundary_1
             new_pb1 = other.__physical_boundary_1
-            new_crop[0] = other.__crop[0]
+            new_crop[0] = other.crop[0]
             id1_1 = 0
             id2_1 = int(round((inner_pb1 - new_pb1) / physical_step))
             new_id1 = id2_1
         if self.__physical_boundary_1 == other.__physical_boundary_1:
-            new_crop[0] = min(self.__crop[0], other.__crop[0])
+            new_crop[0] = min(self.__crop[0], other.crop[0])
         if self.__physical_boundary_2 > other.__physical_boundary_2:
             inner_pb2 = other.__physical_boundary_2
             new_pb2 = self.__physical_boundary_2
@@ -235,11 +235,11 @@ cdef class Mesh1DUniform(Mesh1D):
         else:
             inner_pb2 = self.__physical_boundary_2
             new_pb2 = other.__physical_boundary_2
-            new_crop[1] = other.__crop[1]
+            new_crop[1] = other.crop[1]
             id1_2 = self.num - 1
             id2_2 = other.num - int(round((new_pb2 - inner_pb2) / physical_step)) - 1
         if self.__physical_boundary_2 == other.__physical_boundary_2:
-            new_crop[1] = min(self.__crop[1], other.__crop[1])
+            new_crop[1] = min(self.__crop[1], other.crop[1])
         new_id2 = new_id1 + int(round((inner_pb2 - inner_pb1) / physical_step))
         new_num = int(round((new_pb2 - new_pb1) / physical_step)) + 1
         new_sol = np.zeros(new_num, dtype=np.double)
