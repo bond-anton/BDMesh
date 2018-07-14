@@ -8,6 +8,10 @@ Mesh generators and tools for operation on meshes and meshes trees.
 
 To install BDMesh run
 ```shell
+pip install BDMesh
+```
+or
+```shell
 python setup.py install
 ```
 ## Usage
