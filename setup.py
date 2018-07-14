@@ -1,4 +1,5 @@
 from setuptools import setup, find_packages
+from setuptools.extension import Extension
 from Cython.Build import cythonize
 
 from codecs import open
@@ -21,6 +22,31 @@ else:
 readme_file = path.join(here, 'README.md')
 with open(readme_file, encoding='utf-8') as f:
     long_description = f.read()
+
+extensions = [
+    Extension(
+        'BDMesh.Mesh1D',
+        sources=['BDMesh/Mesh1D.pyx'],
+        depends=['BDMesh/Mesh1D.pxd'],
+    ),
+    Extension(
+        'BDMesh.Mesh1DUniform',
+        sources=['BDMesh/Mesh1DUniform.pyx'],
+        depends=['BDMesh/Mesh1DUniform.pxd']
+    ),
+    Extension(
+        'BDMesh.TreeMesh1D',
+        sources=['BDMesh/TreeMesh1D.pyx'],
+        depends=['BDMesh/TreeMesh1D.pxd']
+    ),
+    Extension(
+        'BDMesh.TreeMesh1DUniform',
+        sources=['BDMesh/TreeMesh1DUniform.pyx'],
+        depends=['BDMesh/TreeMesh1DUniform.pxd']
+    ),
+]
+
+cython_ext_modules = cythonize(extensions)
 
 setup(
     name=package_name,
@@ -54,8 +80,8 @@ setup(
 
     keywords='Mesh',
 
-    packages=find_packages(exclude=['demo', 'tests', 'docs', 'contrib', 'venv']),
-    ext_modules=cythonize('BDMesh/*.pyx'),
+    packages=find_packages(exclude=['demo', 'tests', 'docs', 'contrib', 'build', 'dist', 'venv', 'venv_2.7']),
+    ext_modules=cython_ext_modules,
     install_requires=['numpy', 'Cython'],
     test_suite='nose.collector',
     tests_require=['nose']
