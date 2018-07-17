@@ -55,6 +55,8 @@ setup(
 
     packages=find_packages(exclude=['demo', 'tests', 'docs', 'contrib', 'build', 'dist', 'venv', 'venv_2.7']),
     ext_modules=cythonize('BDMesh/*.pyx'),
+    package_data={'BDMesh': ['Mesh1D.pxd', 'Mesh1DUniform.pxd',
+                             'TreeMesh1D.pxd', 'TreeMesh1DUniform.pxd']},
     install_requires=['numpy', 'Cython'],
     test_suite='nose.collector',
     tests_require=['nose']
