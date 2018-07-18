@@ -3,6 +3,8 @@ import numpy as np
 
 from cpython.object cimport Py_EQ, Py_NE
 
+from cython import wraparound
+
 from libc.math cimport floor, ceil, round
 from .Mesh1D cimport Mesh1D
 from ._helpers cimport check_if_integer_c, interp_1d
@@ -149,6 +151,7 @@ cdef class Mesh1DUniform(Mesh1D):
         else:
             self.__crop[1] = int(crop[1])
 
+    @wraparound(False)
     cpdef void trim(self):
         cdef:
             double step = self.__calc_physical_step()
@@ -156,12 +159,13 @@ cdef class Mesh1DUniform(Mesh1D):
         self.__residual = self.__residual[self.__crop[0]:self.__num - self.__crop[1]]
         self.__physical_boundary_1 += self.__crop[0] * step
         self.__physical_boundary_2 -= self.__crop[1] * step
-        self.__num = int(np.ceil(self.__num - self.__crop[0] - self.__crop[1]))
+        self.__num = int(ceil(self.__num - self.__crop[0] - self.__crop[1]))
         self.__local_nodes = np.linspace(0.0, 1.0, num=self.__num, endpoint=True)
         self.__boundary_condition_1 = self.__solution[0]
-        self.__boundary_condition_2 = self.__solution[-1]
+        self.__boundary_condition_2 = self.__solution[self.__num - 1]
         self.__crop = np.array([0, 0])
-    
+
+    @wraparound(False)
     cpdef inner_mesh_indices(self, Mesh1D mesh):
         cdef:
             int idx1 = -1
@@ -190,6 +194,7 @@ cdef class Mesh1DUniform(Mesh1D):
         else:
             return False
 
+    @wraparound(False)
     cpdef bint merge_with(self, Mesh1D other, double threshold=1e-10, bint self_priority=True):
         """
         Merge mesh with another mesh
@@ -199,7 +204,7 @@ cdef class Mesh1DUniform(Mesh1D):
         :return:
         """
         cdef:
-            double inner_pb1, inner_pb2, new_pb1, new_pb2
+            double inner_pb1, inner_pb2, new_pb1, new_pb2, new_bc1, new_bc2
             double physical_step = self.physical_step
             double[:] new_sol, new_res
             int new_num, id1_1, id1_2, id2_1, id2_2, new_id1, new_id2
@@ -213,6 +218,7 @@ cdef class Mesh1DUniform(Mesh1D):
         if self.__physical_boundary_1 < other.__physical_boundary_1:
             inner_pb1 = other.__physical_boundary_1
             new_pb1 = self.__physical_boundary_1
+            new_bc1 = self.__boundary_condition_1
             new_crop[0] = self.__crop[0]
             id2_1 = 0
             id1_1 = int(round((inner_pb1 - new_pb1) / physical_step))
@@ -220,6 +226,7 @@ cdef class Mesh1DUniform(Mesh1D):
         else:
             inner_pb1 = self.__physical_boundary_1
             new_pb1 = other.__physical_boundary_1
+            new_bc1 = other.__boundary_condition_1
             new_crop[0] = other.crop[0]
             id1_1 = 0
             id2_1 = int(round((inner_pb1 - new_pb1) / physical_step))
@@ -229,12 +236,14 @@ cdef class Mesh1DUniform(Mesh1D):
         if self.__physical_boundary_2 > other.__physical_boundary_2:
             inner_pb2 = other.__physical_boundary_2
             new_pb2 = self.__physical_boundary_2
+            new_bc2 = self.__boundary_condition_2
             new_crop[1] = self.__crop[1]
             id2_2 = other.num - 1
             id1_2 = self.num - int(round((new_pb2 - inner_pb2) / physical_step)) - 1
         else:
             inner_pb2 = self.__physical_boundary_2
             new_pb2 = other.__physical_boundary_2
+            new_bc2 = other.__boundary_condition_2
             new_crop[1] = other.crop[1]
             id1_2 = self.num - 1
             id2_2 = other.num - int(round((new_pb2 - inner_pb2) / physical_step)) - 1
@@ -254,6 +263,8 @@ cdef class Mesh1DUniform(Mesh1D):
         self.__local_nodes = np.linspace(0.0, 1.0, num=new_num, endpoint=True)
         self.__physical_boundary_1 = new_pb1
         self.__physical_boundary_2 = new_pb2
+        self.__boundary_condition_1 = new_bc1
+        self.__boundary_condition_2 = new_bc2
         self.__solution = new_sol
         self.__residual = new_res
         self.__crop = new_crop

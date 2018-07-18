@@ -96,6 +96,8 @@ cdef class TreeMesh1DUniform(TreeMesh1D):
         else:
             self.__crop[1] = int(crop[1])
 
+    @boundscheck(False)
+    @wraparound(False)
     cpdef bint add_mesh(self, Mesh1D mesh, int level=-1):
         cdef:
             double log_level, threshold = 1e-6
@@ -109,6 +111,8 @@ cdef class TreeMesh1DUniform(TreeMesh1D):
             return False
         return super(TreeMesh1DUniform, self).add_mesh(mesh, calc_level)
 
+    @boundscheck(False)
+    @wraparound(False)
     cpdef void trim(self):
         cdef:
             int level = 1
@@ -119,25 +123,24 @@ cdef class TreeMesh1DUniform(TreeMesh1D):
             int[2] crop
         self.root_mesh.crop = self.crop
         self.root_mesh.trim()
-        trimmed = True if level > self.levels[-1] else False
+        trimmed = True if level > self.levels[len(self.levels) - 1] else False
         while not trimmed:
             meshes_for_deletion = []
-            with boundscheck(False), wraparound(False):
-                for mesh in self.tree[level]:
-                    mesh.trim()
-                    crop = [0, 0]
-                    left_offset = (self.root_mesh.physical_boundary_1 - mesh.physical_boundary_1) / mesh.physical_step
-                    right_offset = (mesh.physical_boundary_2 - self.root_mesh.physical_boundary_2) / mesh.physical_step
-                    crop[0] = int(ceil(left_offset)) if left_offset > 0 else 0
-                    crop[1] = int(ceil(right_offset)) if right_offset > 0 else 0
-                    if crop[0] + crop[1] >= mesh.num - 2:
-                            meshes_for_deletion.append(mesh)
-                            continue
-                    mesh.crop = np.array(crop)
-                    mesh.trim()
-                for mesh in meshes_for_deletion:
-                    self.del_mesh(mesh)
+            for mesh in self.tree[level]:
+                mesh.trim()
+                crop = [0, 0]
+                left_offset = (self.root_mesh.physical_boundary_1 - mesh.physical_boundary_1) / mesh.physical_step
+                right_offset = (mesh.physical_boundary_2 - self.root_mesh.physical_boundary_2) / mesh.physical_step
+                crop[0] = int(ceil(left_offset)) if left_offset > 0 else 0
+                crop[1] = int(ceil(right_offset)) if right_offset > 0 else 0
+                if crop[0] + crop[1] >= mesh.num - 2:
+                        meshes_for_deletion.append(mesh)
+                        continue
+                mesh.crop = np.array(crop)
+                mesh.trim()
+            for mesh in meshes_for_deletion:
+                self.del_mesh(mesh)
             level += 1
-            if level > self.levels[-1]:
+            if level > self.levels[len(self.levels) - 1]:
                 trimmed = True
         self.crop = [0, 0]
