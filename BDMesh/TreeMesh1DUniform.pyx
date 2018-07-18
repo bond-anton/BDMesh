@@ -2,7 +2,7 @@ from __future__ import division, print_function
 import numpy as np
 
 from cython import boundscheck, wraparound
-from libc.math cimport floor, ceil, round, log
+from libc.math cimport ceil, round, log
 
 from .Mesh1D cimport Mesh1D
 from .Mesh1DUniform cimport Mesh1DUniform
