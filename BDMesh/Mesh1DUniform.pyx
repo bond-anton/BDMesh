@@ -256,6 +256,20 @@ cdef class Mesh1DUniform(Mesh1D):
         if self_priority:
             new_sol[new_id1:new_id2] = self.__solution[id1_1:id1_2]
             new_res[new_id1:new_id2] = self.__residual[id1_1:id1_2]
+            if new_id1 > 0:
+                if id1_1 > 0:
+                    new_sol[0:new_id1] = self.__solution[0:id1_1]
+                    new_res[0:new_id1] = self.__residual[0:id1_1]
+                else:
+                    new_sol[0:new_id1] = other.__solution[0:id2_1]
+                    new_res[0:new_id1] = other.__residual[0:id2_1]
+            if new_id2 < new_num - 1:
+                if id1_2 < 0:
+                    new_sol[0:new_id1] = self.__solution[0:id1_1]
+                    new_res[0:new_id1] = self.__residual[0:id1_1]
+                else:
+                    new_sol[0:new_id1] = other.__solution[0:id2_1]
+                    new_res[0:new_id1] = other.__residual[0:id2_1]
         else:
             new_sol[new_id1:new_id2] = other.__solution[id2_1:id2_2]
             new_res[new_id1:new_id2] = other.__residual[id2_1:id2_2]
