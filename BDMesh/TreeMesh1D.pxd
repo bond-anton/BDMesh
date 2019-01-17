@@ -17,3 +17,5 @@ cdef class TreeMesh1D(object):
     cpdef void merge_overlaps(self)
     cpdef void cleanup(self)
     cpdef Mesh1D flatten(self)
+    cpdef double[:] interpolate_solution(self, double[:] phys_nodes)
+    cpdef double[:] interpolate_residual(self, double[:] phys_nodes)

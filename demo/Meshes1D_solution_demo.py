@@ -55,27 +55,29 @@ Meshes.add_mesh(child_mesh_2_1)
 Meshes.add_mesh(child_mesh_2_2)
 Meshes.add_mesh(child_mesh_3_1)
 
-query_points_x = np.arange(1, 6) * np.pi / 1
-query_points_y = np.asarray(child_mesh_1_2.interpolate_solution(query_points_x))
-
-print(child_mesh_1_2.to_local_coordinate(query_points_x))
-print(np.asarray(child_mesh_1_2.interpolate_solution(query_points_x)))
-
 # plot_tree(Meshes)
 # Meshes.crop = [1, 1]
 # Meshes.trim()
 # plot_tree(Meshes)
-Meshes.crop = [2, 2]
-Meshes.trim()
+# Meshes.crop = [2, 2]
+# Meshes.trim()
+
+flattened = Meshes.flatten()
+
+query_points_x = np.arange(1, 6) * np.pi / 1
+query_points_y = np.asarray(Meshes.interpolate_solution(query_points_x))
 
 _, ax = plt.subplots(3, 1)
 plot_tree(Meshes, ax)
+ax[2].plot(flattened.physical_nodes, flattened.solution, 'r-o')
+ax[1].plot(query_points_x, query_points_y, '-x')
+ax[2].plot(query_points_x, query_points_y, '-x')
+ax[2].grid(True)
 for query_point_x, query_point_y in zip(query_points_x, query_points_y):
     ax[0].axvline(x=query_point_x)
     ax[1].axvline(x=query_point_x)
-    ax[1].axhline(y=query_point_y)
+    # ax[1].axhline(y=query_point_y)
+    ax[2].axvline(x=query_point_x)
+    # ax[2].axhline(y=query_point_y)
 
-
-flattened = Meshes.flatten()
-ax[2].plot(flattened.physical_nodes, flattened.solution)
 plt.show()

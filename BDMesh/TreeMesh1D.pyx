@@ -182,3 +182,13 @@ cdef class TreeMesh1D(object):
             for mesh in self.__tree[level]:
                 flattened_mesh.merge_with(mesh, threshold=1.0e-10, self_priority=False)
         return flattened_mesh
+
+    cpdef double[:] interpolate_solution(self, double[:] phys_nodes):
+        cdef:
+            Mesh1D flattened = self.flatten()
+        return interp_1d(phys_nodes, flattened.to_physical(flattened.__local_nodes), flattened.__solution)
+
+    cpdef double[:] interpolate_residual(self, double[:] phys_nodes):
+        cdef:
+            Mesh1D flattened = self.flatten()
+        return interp_1d(phys_nodes, flattened.to_physical(flattened.__local_nodes), flattened.__residual)
