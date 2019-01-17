@@ -264,15 +264,29 @@ cdef class Mesh1DUniform(Mesh1D):
                     new_sol[0:new_id1] = other.__solution[0:id2_1]
                     new_res[0:new_id1] = other.__residual[0:id2_1]
             if new_id2 < new_num - 1:
-                if id1_2 < 0:
-                    new_sol[0:new_id1] = self.__solution[0:id1_1]
-                    new_res[0:new_id1] = self.__residual[0:id1_1]
+                if id1_2 < self.__num - 1:
+                    new_sol[new_id2:] = self.__solution[id1_2:]
+                    new_res[new_id2:] = self.__residual[id1_2:]
                 else:
-                    new_sol[0:new_id1] = other.__solution[0:id2_1]
-                    new_res[0:new_id1] = other.__residual[0:id2_1]
+                    new_sol[new_id2:] = other.__solution[id2_2:]
+                    new_res[new_id2:] = other.__residual[id2_2:]
         else:
             new_sol[new_id1:new_id2] = other.__solution[id2_1:id2_2]
             new_res[new_id1:new_id2] = other.__residual[id2_1:id2_2]
+            if new_id1 > 0:
+                if id2_1 > 0:
+                    new_sol[0:new_id1] = other.__solution[0:id2_1]
+                    new_res[0:new_id1] = other.__residual[0:id2_1]
+                else:
+                    new_sol[0:new_id1] = self.__solution[0:id1_1]
+                    new_res[0:new_id1] = self.__residual[0:id1_1]
+            if new_id2 < new_num - 1:
+                if id2_2 < self.__num - 1:
+                    new_sol[new_id2:] = other.__solution[id2_2:]
+                    new_res[new_id2:] = other.__residual[id2_2:]
+                else:
+                    new_sol[new_id2:] = self.__solution[id1_2:]
+                    new_res[new_id2:] = self.__residual[id1_2:]
         self.__num = new_num
         self.__local_nodes = np.linspace(0.0, 1.0, num=new_num, endpoint=True)
         self.__physical_boundary_1 = new_pb1

@@ -4,6 +4,7 @@ import numpy as np
 from cython import boundscheck, wraparound
 
 from .Mesh1D cimport Mesh1D
+from ._helpers cimport interp_1d
 
 
 cdef class TreeMesh1D(object):

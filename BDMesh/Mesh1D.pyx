@@ -286,3 +286,9 @@ cdef class Mesh1D(object):
         self.__solution = sol[:k]
         self.__residual = res[:k]
         return True
+
+    cpdef double[:] interpolate_solution(self, double[:] phys_nodes):
+        return interp_1d(phys_nodes, self.to_physical(self.__local_nodes), self.__solution)
+
+    cpdef double[:] interpolate_residual(self, double[:] phys_nodes):
+        return interp_1d(phys_nodes, self.to_physical(self.__local_nodes), self.__residual)

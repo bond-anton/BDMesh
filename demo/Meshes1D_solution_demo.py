@@ -32,7 +32,7 @@ child_mesh_1_1 = Mesh1DUniform(0.0, 9.0, physical_step=0.5, boundary_condition_1
 child_mesh_1_1.solution = np.asarray(child_mesh_1_1.physical_nodes) ** 2
 
 child_mesh_1_2 = Mesh1DUniform(3.0, 17.0, physical_step=0.5, boundary_condition_1=1, boundary_condition_2=0)
-child_mesh_1_2.solution = -1.5 + np.asarray(child_mesh_1_2.physical_nodes) ** 2
+child_mesh_1_2.solution = np.asarray(child_mesh_1_2.physical_nodes) ** 2
 
 child_mesh_1_3 = Mesh1DUniform(6.0, 8.0, physical_step=0.5, boundary_condition_1=1, boundary_condition_2=0)
 child_mesh_1_3.solution = np.asarray(child_mesh_1_3.physical_nodes) ** 2
@@ -43,24 +43,39 @@ child_mesh_2_1.solution = np.asarray(child_mesh_2_1.physical_nodes) ** 2
 child_mesh_2_2 = Mesh1DUniform(2.0, 5.0, physical_step=0.25, boundary_condition_1=1, boundary_condition_2=0)
 child_mesh_2_2.solution = np.asarray(child_mesh_2_2.physical_nodes) ** 2
 
-child_mesh_3_1 = Mesh1DUniform(1.0, 1.5, physical_step=0.125, boundary_condition_1=1, boundary_condition_2=0)
+child_mesh_3_1 = Mesh1DUniform(1.0, 3.5, physical_step=0.125, boundary_condition_1=1, boundary_condition_2=0)
 child_mesh_3_1.solution = np.asarray(child_mesh_3_1.physical_nodes) ** 2
 
 Meshes = TreeMesh1DUniform(root_mesh, aligned=False)
-Meshes.add_mesh(child_mesh_1_1)
-
 Meshes.add_mesh(child_mesh_1_2)
-# Meshes.add_mesh(child_mesh_1_3)
-#
-# Meshes.add_mesh(child_mesh_2_1)
-# Meshes.add_mesh(child_mesh_2_2)
-# Meshes.add_mesh(child_mesh_3_1)
+Meshes.add_mesh(child_mesh_1_1)
+Meshes.add_mesh(child_mesh_1_3)
 
+Meshes.add_mesh(child_mesh_2_1)
+Meshes.add_mesh(child_mesh_2_2)
+Meshes.add_mesh(child_mesh_3_1)
 
-plot_tree(Meshes)
-# Meshes.crop = [1, 1]
-# Meshes.trim()
+query_points_x = np.arange(1, 6) * np.pi / 1
+query_points_y = np.asarray(child_mesh_1_2.interpolate_solution(query_points_x))
+
+print(child_mesh_1_2.to_local_coordinate(query_points_x))
+print(np.asarray(child_mesh_1_2.interpolate_solution(query_points_x)))
+
 # plot_tree(Meshes)
 # Meshes.crop = [1, 1]
 # Meshes.trim()
 # plot_tree(Meshes)
+Meshes.crop = [2, 2]
+Meshes.trim()
+
+_, ax = plt.subplots(3, 1)
+plot_tree(Meshes, ax)
+for query_point_x, query_point_y in zip(query_points_x, query_points_y):
+    ax[0].axvline(x=query_point_x)
+    ax[1].axvline(x=query_point_x)
+    ax[1].axhline(y=query_point_y)
+
+
+flattened = Meshes.flatten()
+ax[2].plot(flattened.physical_nodes, flattened.solution)
+plt.show()

@@ -14,3 +14,5 @@ cdef class Mesh1D:
     cpdef bint is_inside_of(self, Mesh1D mesh)
     cpdef bint overlap_with(self, Mesh1D mesh)
     cpdef bint merge_with(self, Mesh1D other, double threshold=*, bint self_priority=*)
+    cpdef double[:] interpolate_solution(self, double[:] phys_nodes)
+    cpdef double[:] interpolate_residual(self, double[:] phys_nodes)

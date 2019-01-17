@@ -1,6 +1,7 @@
 from setuptools import setup, find_packages
 from Cython.Build import cythonize
 
+import sys
 from codecs import open
 from os import path
 import re
@@ -54,7 +55,7 @@ setup(
     keywords='Mesh',
 
     packages=find_packages(exclude=['demo', 'tests', 'docs', 'contrib', 'build', 'dist', 'venv', 'venv_2.7']),
-    ext_modules=cythonize('BDMesh/*.pyx'),
+    ext_modules=cythonize('BDMesh/*.pyx', compiler_directives={'language_level': sys.version_info[0]}),
     package_data={'BDMesh': ['Mesh1D.pxd', 'Mesh1DUniform.pxd',
                              'TreeMesh1D.pxd', 'TreeMesh1DUniform.pxd']},
     install_requires=['numpy', 'Cython'],
