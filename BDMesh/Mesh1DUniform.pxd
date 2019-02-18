@@ -6,8 +6,8 @@ cdef class Mesh1DUniform(Mesh1D):
         int __num
         int[2] __crop
 
-    cdef double __calc_local_step(self)
-    cdef double __calc_physical_step(self)
+    cdef double __calc_local_step(self) nogil
+    cdef double __calc_physical_step(self) nogil
 
     cpdef void trim(self)
     cpdef inner_mesh_indices(self, Mesh1D mesh)

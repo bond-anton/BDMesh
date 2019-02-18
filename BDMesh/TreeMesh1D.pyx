@@ -1,8 +1,6 @@
-from __future__ import division, print_function
-import numpy as np
-
 from cython import boundscheck, wraparound
 
+from cpython.array cimport array, clone
 from .Mesh1D cimport Mesh1D
 from ._helpers cimport interp_1d
 
@@ -56,15 +54,28 @@ cdef class TreeMesh1D(object):
 
     @boundscheck(False)
     @wraparound(False)
+    cpdef int[:] upper_levels(self, int level):
+        cdef:
+            int n=0, s = len(self.__tree)
+            array[int] result, template = array('i')
+        result = clone(template, s, zero=False)
+        for tree_level in self.__tree.keys():
+            if tree_level > level:
+                result[n] = tree_level
+                n += 1
+        return result[0:n]
+
+    @boundscheck(False)
+    @wraparound(False)
     cpdef dict get_children(self, Mesh1D mesh):
         cdef:
             dict children = {}
             int level = self.get_mesh_level(mesh)
-            long[:] upper_levels
+            int[:] upper_levels
             int upper_level
             Mesh1D tree_mesh
             list levels
-        upper_levels = np.array(self.levels)[np.where(np.array(self.levels) > level)]
+        upper_levels = self.upper_levels(level)
         for upper_level in upper_levels:
             for tree_mesh in self.tree[upper_level]:
                 if tree_mesh.is_inside_of(mesh):
@@ -103,13 +114,13 @@ cdef class TreeMesh1D(object):
     cpdef void remove_coarse_duplicates(self):
         cdef:
             int level, upper_level
-            long[:] upper_levels
+            int[:] upper_levels
             Mesh1D mesh, tree_mesh
             bint mesh_removed
         for level in self.levels:
             for mesh in self.__tree[level]:
                 mesh_removed = False
-                upper_levels = np.array(self.levels)[np.where(np.array(self.levels) > level)]
+                upper_levels = self.upper_levels(level)
                 for upper_level in upper_levels:
                     for tree_mesh in self.__tree[upper_level]:
                         if mesh.is_inside_of(tree_mesh):
@@ -186,9 +197,9 @@ cdef class TreeMesh1D(object):
     cpdef double[:] interpolate_solution(self, double[:] phys_nodes):
         cdef:
             Mesh1D flattened = self.flatten()
-        return interp_1d(phys_nodes, flattened.to_physical(flattened.__local_nodes), flattened.__solution)
+        return interp_1d(phys_nodes, flattened.to_physical_coordinate(flattened.__local_nodes), flattened.__solution)
 
     cpdef double[:] interpolate_residual(self, double[:] phys_nodes):
         cdef:
             Mesh1D flattened = self.flatten()
-        return interp_1d(phys_nodes, flattened.to_physical(flattened.__local_nodes), flattened.__residual)
+        return interp_1d(phys_nodes, flattened.to_physical_coordinate(flattened.__local_nodes), flattened.__residual)

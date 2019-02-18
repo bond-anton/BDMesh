@@ -1,9 +1,10 @@
-from __future__ import division, print_function
-import numpy as np
-from cpython.object cimport Py_EQ, Py_NE
 from cython import boundscheck, wraparound
 
-from ._helpers cimport trapz_1d, interp_1d
+from cpython.object cimport Py_EQ, Py_NE
+from cpython.array cimport array, clone
+from libc.math cimport fabs
+
+from ._helpers cimport trapz_1d, interp_1d, allclose
 
 
 cdef class Mesh1D(object):
@@ -20,9 +21,11 @@ cdef class Mesh1D(object):
             self.__physical_boundary_1 = physical_boundary_2
             self.__boundary_condition_2 = boundary_condition_1
             self.__boundary_condition_1 = boundary_condition_2
-        self.__local_nodes = np.array([0.0, 1.0], dtype=np.double)
-        self.__solution = np.array([0.0, 0.0], dtype=np.double)
-        self.__residual = np.array([0.0, 0.0], dtype=np.double)
+        self.__local_nodes = clone(array('d'), 2, zero=False)
+        self.__local_nodes[0] = 0.0
+        self.__local_nodes[1] = 1.0
+        self.__solution = clone(array('d'), 2, zero=True)
+        self.__residual = clone(array('d'), 2, zero=True)
 
     def __str__(self):
         return 'Mesh1D: [%2.2g; %2.2g], %d nodes' % (self.__physical_boundary_1, self.__physical_boundary_2,
@@ -34,7 +37,7 @@ cdef class Mesh1D(object):
                 if x.physical_boundary_1 == y.physical_boundary_1:
                     if x.physical_boundary_2 == y.physical_boundary_2:
                         if x.local_nodes.size == y.local_nodes.size:
-                            if np.allclose(x.local_nodes, y.local_nodes):
+                            if allclose(x.local_nodes, y.local_nodes):
                                 return True
             return False
         elif op == Py_NE:
@@ -42,7 +45,7 @@ cdef class Mesh1D(object):
                 if x.physical_boundary_1 == y.physical_boundary_1:
                     if x.physical_boundary_2 == y.physical_boundary_2:
                         if x.local_nodes.size == y.local_nodes.size:
-                            if np.allclose(x.local_nodes, y.local_nodes):
+                            if allclose(x.local_nodes, y.local_nodes):
                                 return False
             return True
         else:
@@ -50,7 +53,7 @@ cdef class Mesh1D(object):
 
     @property
     def local_nodes(self):
-        return np.asarray(self.__local_nodes)
+        return self.__local_nodes
 
     @local_nodes.setter
     def local_nodes(self, double[:] local_nodes):
@@ -60,10 +63,12 @@ cdef class Mesh1D(object):
         if n < 2:
             raise ValueError('Mesh must have at least two nodes')
         if local_nodes[0] == 0.0 and local_nodes[n-1] == 1.0:
-            physical_nodes_old = self.to_physical(self.__local_nodes)
+            physical_nodes_old = self.to_physical_coordinate(self.__local_nodes)
             self.__local_nodes = local_nodes
-            self.__solution = interp_1d(self.to_physical(self.__local_nodes), physical_nodes_old, self.__solution)
-            self.__residual = interp_1d(self.to_physical(self.__local_nodes), physical_nodes_old, self.__residual)
+            self.__solution = interp_1d(self.to_physical_coordinate(self.__local_nodes),
+                                        physical_nodes_old, self.__solution)
+            self.__residual = interp_1d(self.to_physical_coordinate(self.__local_nodes),
+                                        physical_nodes_old, self.__residual)
         else:
             raise ValueError('Local mesh nodes must start with 0.0 and end with 1.0')
 
@@ -73,8 +78,8 @@ cdef class Mesh1D(object):
 
     @physical_boundary_1.setter
     def physical_boundary_1(self, double physical_boundary_1):
-        if self.__physical_boundary_2 > <double>physical_boundary_1:
-            self.__physical_boundary_1 = <double>physical_boundary_1
+        if self.__physical_boundary_2 > physical_boundary_1:
+            self.__physical_boundary_1 = physical_boundary_1
         else:
             raise ValueError('physical boundary 2 must be greater than physical boundary 1')
 
@@ -84,12 +89,12 @@ cdef class Mesh1D(object):
 
     @physical_boundary_2.setter
     def physical_boundary_2(self, double physical_boundary_2):
-        if self.__physical_boundary_1 < <double>physical_boundary_2:
-            self.__physical_boundary_2 = <double>physical_boundary_2
+        if self.__physical_boundary_1 < physical_boundary_2:
+            self.__physical_boundary_2 = physical_boundary_2
         else:
             raise ValueError('physical boundary 2 must be greater than physical boundary 1')
 
-    cdef double j(self):
+    cdef double j(self) nogil:
         return self.__physical_boundary_2 - self.__physical_boundary_1
 
     @property
@@ -98,33 +103,29 @@ cdef class Mesh1D(object):
 
     @boundscheck(False)
     @wraparound(False)
-    cdef double[:] to_physical(self, double[:] x):
+    cpdef double[:] to_physical_coordinate(self, double[:] x):
         cdef:
-            int n = x.shape[0], i
-            double[:] res = np.zeros(n, dtype=np.double)
-        for i in range(n):
-            res[i] = self.__physical_boundary_1 + self.j() * x[i]
-        return res
-
-    def to_physical_coordinate(self, double[:] x):
-        return np.asarray(self.to_physical(x))
+            int s = x.shape[0], i
+            array[double] result, template = array('d')
+        result = clone(template, s, zero=False)
+        for i in range(s):
+            result[i] = self.__physical_boundary_1 + self.j() * x[i]
+        return result
 
     @boundscheck(False)
     @wraparound(False)
-    cdef double[:] to_local(self, double[:] x):
+    cpdef double[:] to_local_coordinate(self, double[:] x):
         cdef:
-            int n = x.shape[0], i
-            double[:] res = np.zeros(n, dtype=np.double)
-        for i in range(n):
-            res[i] = (x[i] - self.__physical_boundary_1) / self.j()
-        return res
-
-    def to_local_coordinate(self, double[:] x):
-        return np.asarray(self.to_local(x))
+            int s = x.shape[0], i
+            array[double] result, template = array('d')
+        result = clone(template, s, zero=False)
+        for i in range(s):
+            result[i] = (x[i] - self.__physical_boundary_1) / self.j()
+        return result
 
     @property
     def physical_nodes(self):
-        return np.asarray(self.to_physical(self.__local_nodes))
+        return self.to_physical_coordinate(self.__local_nodes)
 
     @property
     def num(self):
@@ -148,7 +149,7 @@ cdef class Mesh1D(object):
 
     @property
     def solution(self):
-        return np.asarray(self.__solution)
+        return self.__solution
 
     @solution.setter
     def solution(self, double[:] solution):
@@ -159,7 +160,7 @@ cdef class Mesh1D(object):
 
     @property
     def residual(self):
-        return np.asarray(self.__residual)
+        return self.__residual
 
     @residual.setter
     def residual(self, double[:] residual):
@@ -169,7 +170,7 @@ cdef class Mesh1D(object):
             raise ValueError('Length of residual must match number of mesh nodes')
 
     cdef double int_res(self):
-        return trapz_1d(self.__residual, self.to_physical(self.__local_nodes))
+        return trapz_1d(self.__residual, self.to_physical_coordinate(self.__local_nodes))
 
     @property
     def integrational_residual(self):
@@ -226,10 +227,11 @@ cdef class Mesh1D(object):
             int m = other.__local_nodes.shape[0]
             int i = 0, j = 0, k = 0
             double bc_1, bc_2
-            double[:] phys = np.zeros(n + m)
-            double[:] sol = np.zeros(n + m)
-            double[:] res = np.zeros(n + m)
             double[:] phys_self, phys_other
+            array[double] phys, sol, res, template = array('d')
+        phys = clone(template, n + m, zero=False)
+        sol = clone(template, n + m, zero=False)
+        res = clone(template, n + m, zero=False)
         if not self.overlap_with(other):
             return False
         if self.__physical_boundary_1 <= other.__physical_boundary_1:
@@ -240,12 +242,12 @@ cdef class Mesh1D(object):
             bc_2 = self.__boundary_condition_2
         else:
             bc_2 = other.__boundary_condition_2
-        phys_self = self.to_physical(self.__local_nodes)
-        phys_other = other.to_physical(other.__local_nodes)
+        phys_self = self.to_physical_coordinate(self.__local_nodes)
+        phys_other = other.to_physical_coordinate(other.__local_nodes)
         while i < n or j < m:
             if i < n:
                 if j < m:
-                    if abs(phys_self[i] - phys_other[j]) < threshold:
+                    if fabs(phys_self[i] - phys_other[j]) < threshold:
                         if self_priority:
                             phys[k] = phys_self[i]
                             sol[k] = self.__solution[i]
@@ -282,13 +284,13 @@ cdef class Mesh1D(object):
         self.__physical_boundary_2 = phys[k - 1]
         self.__boundary_condition_1 = bc_1
         self.__boundary_condition_2 = bc_2
-        self.__local_nodes = self.to_local(phys[:k])
+        self.__local_nodes = self.to_local_coordinate(phys[:k])
         self.__solution = sol[:k]
         self.__residual = res[:k]
         return True
 
     cpdef double[:] interpolate_solution(self, double[:] phys_nodes):
-        return interp_1d(phys_nodes, self.to_physical(self.__local_nodes), self.__solution)
+        return interp_1d(phys_nodes, self.to_physical_coordinate(self.__local_nodes), self.__solution)
 
     cpdef double[:] interpolate_residual(self, double[:] phys_nodes):
-        return interp_1d(phys_nodes, self.to_physical(self.__local_nodes), self.__residual)
+        return interp_1d(phys_nodes, self.to_physical_coordinate(self.__local_nodes), self.__residual)

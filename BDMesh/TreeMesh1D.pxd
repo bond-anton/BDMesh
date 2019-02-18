@@ -9,6 +9,7 @@ cdef class TreeMesh1D(object):
 
     cpdef bint add_mesh(self, Mesh1D mesh, int level=*)
     cpdef int get_mesh_level(self, Mesh1D mesh)
+    cpdef int[:] upper_levels(self, int level)
     cpdef dict get_children(self, Mesh1D mesh)
     cpdef bint del_mesh(self, Mesh1D mesh)
     cpdef void remove_coarse_duplicates(self)

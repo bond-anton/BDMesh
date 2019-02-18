@@ -1,6 +1,3 @@
-from __future__ import division, print_function
-import numpy as np
-
 from cython import boundscheck, wraparound
 from libc.math cimport ceil, round, log
 
@@ -136,7 +133,7 @@ cdef class TreeMesh1DUniform(TreeMesh1D):
                 if crop[0] + crop[1] >= mesh.num - 2:
                         meshes_for_deletion.append(mesh)
                         continue
-                mesh.crop = np.array(crop)
+                mesh.crop = [crop[0], crop[1]]
                 mesh.trim()
             for mesh in meshes_for_deletion:
                 self.del_mesh(mesh)

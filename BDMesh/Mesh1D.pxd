@@ -7,9 +7,9 @@ cdef class Mesh1D:
         double[:] __solution
         double[:] __residual
 
-    cdef double j(self)
-    cdef double[:] to_physical(self, double[:] x)
-    cdef double[:] to_local(self, double[:] x)
+    cdef double j(self) nogil
+    cpdef double[:] to_physical_coordinate(self, double[:] x)
+    cpdef double[:] to_local_coordinate(self, double[:] x)
     cdef double int_res(self)
     cpdef bint is_inside_of(self, Mesh1D mesh)
     cpdef bint overlap_with(self, Mesh1D mesh)

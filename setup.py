@@ -1,7 +1,8 @@
 from setuptools import setup, find_packages
+from setuptools.extension import Extension
+from setuptools.command.build_ext import build_ext
 from Cython.Build import cythonize
 
-import sys
 from codecs import open
 from os import path
 import re
@@ -21,6 +22,54 @@ else:
 readme_file = path.join(here, 'README.md')
 with open(readme_file, encoding='utf-8') as f:
     long_description = f.read()
+
+extensions = [
+    Extension(
+        'BDMesh._helpers',
+        ['BDMesh/_helpers.pyx'],
+        depends=['BDMesh/_helpers.pxd'],
+    ),
+    Extension(
+        'BDMesh.Mesh1D',
+        ['BDMesh/Mesh1D.pyx'],
+        depends=['BDMesh/Mesh1D.pxd'],
+    ),
+    Extension(
+        'BDMesh.Mesh1DUniform',
+        ['BDMesh/Mesh1DUniform.pyx'],
+        depends=['BDMesh/Mesh1DUniform.pxd'],
+    ),
+    Extension(
+        'BDMesh.TreeMesh1D',
+        ['BDMesh/TreeMesh1D.pyx'],
+        depends=['BDMesh/TreeMesh1D.pxd'],
+    ),
+    Extension(
+        'BDMesh.TreeMesh1DUniform',
+        ['BDMesh/TreeMesh1DUniform.pyx'],
+        depends=['BDMesh/TreeMesh1DUniform.pxd'],
+    ),
+]
+
+copt = {'msvc': [],
+        'mingw32': [],
+        'unix': []}
+lopt = {'mingw32': [],
+        'unix': []}
+
+
+class CustomBuildExt(build_ext):
+    def build_extensions(self):
+        c = self.compiler.compiler_type
+        print('Compiler:', c)
+        if c in copt:
+            for e in self.extensions:
+                e.extra_compile_args = copt[c]
+        if c in lopt:
+            for e in self.extensions:
+                e.extra_link_args = lopt[c]
+        build_ext.build_extensions(self)
+
 
 setup(
     name=package_name,
@@ -43,10 +92,8 @@ setup(
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: Apache Software License',
         'Topic :: Scientific/Engineering :: Mathematics',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
@@ -54,11 +101,12 @@ setup(
 
     keywords='Mesh',
 
-    packages=find_packages(exclude=['demo', 'tests', 'docs', 'contrib', 'build', 'dist', 'venv', 'venv_2.7']),
-    ext_modules=cythonize('BDMesh/*.pyx', compiler_directives={'language_level': sys.version_info[0]}),
+    packages=find_packages(exclude=['demo', 'tests', 'docs', 'contrib', 'build', 'dist', 'venv']),
+    ext_modules=cythonize(extensions, compiler_directives={'language_level': 3}),
     package_data={'BDMesh': ['Mesh1D.pxd', 'Mesh1DUniform.pxd',
                              'TreeMesh1D.pxd', 'TreeMesh1DUniform.pxd']},
-    install_requires=['numpy', 'Cython'],
+    install_requires=['Cython'],
     test_suite='nose.collector',
-    tests_require=['nose']
+    tests_require=['nose', 'numpy'],
+    cmdclass={'build_ext': CustomBuildExt},
 )
