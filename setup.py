@@ -129,6 +129,7 @@ setup(
     ext_modules=cythonize(extensions, compiler_directives={'language_level': 3}),
     package_data={'BDMesh': ['Mesh1D.pxd', 'Mesh1DUniform.pxd',
                              'TreeMesh1D.pxd', 'TreeMesh1DUniform.pxd']},
+    setup_requires=['Cython'],
     install_requires=['Cython'],
     test_suite='nose.collector',
     tests_require=['nose', 'numpy'],
