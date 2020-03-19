@@ -1,11 +1,14 @@
-from setuptools import setup, find_packages
-from setuptools.extension import Extension
-from setuptools.command.build_ext import build_ext
-from Cython.Build import cythonize
-
+import sys
 from codecs import open
 from os import path, remove
 import re
+
+from setuptools import setup, find_packages
+from setuptools.extension import Extension
+from setuptools.command.build_ext import build_ext
+
+from Cython.Build import cythonize
+
 
 here = path.abspath(path.dirname(__file__))
 package_name = 'BDMesh'
@@ -126,11 +129,11 @@ setup(
     keywords='Mesh',
 
     packages=find_packages(exclude=['demo', 'tests', 'docs', 'contrib', 'build', 'dist', 'venv']),
-    ext_modules=cythonize(extensions, compiler_directives={'language_level': 3}),
+    ext_modules=cythonize(extensions, compiler_directives={'language_level': sys.version_info[0]}),
     package_data={'BDMesh': ['Mesh1D.pxd', 'Mesh1DUniform.pxd',
                              'TreeMesh1D.pxd', 'TreeMesh1DUniform.pxd']},
-    setup_requires=['Cython'],
-    install_requires=['Cython'],
+    # setup_requires=['Cython'],
+    # install_requires=['Cython'],
     test_suite='nose.collector',
     tests_require=['nose', 'numpy'],
     cmdclass={'build_ext': CustomBuildExt},
