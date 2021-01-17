@@ -23,5 +23,3 @@ MyMesh.local_nodes = np.linspace(0.0, 1.0, num=11, endpoint=True, dtype=np.float
 print(MyMesh.local_nodes)
 print(MyMesh.num)
 print(MyMesh.physical_nodes)
-
-

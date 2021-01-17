@@ -21,6 +21,7 @@ def plot_tree(mesh_tree, ax=None):
     if show:
         plt.show()
 
+
 root_mesh = Mesh1DUniform(0.0, 10.0, physical_step=1.0, boundary_condition_1=1, boundary_condition_2=0)
 child_mesh_1_1 = Mesh1DUniform(0.0, 9.0, physical_step=0.5, boundary_condition_1=1, boundary_condition_2=0)
 child_mesh_1_2 = Mesh1DUniform(3.0, 17.0, physical_step=0.5, boundary_condition_1=1, boundary_condition_2=0)
