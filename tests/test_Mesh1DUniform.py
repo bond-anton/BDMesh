@@ -123,6 +123,13 @@ class TestMesh1DUniform(unittest.TestCase):
         inner = Mesh1DUniform(0.55, 9.55, physical_step=1.0)
         indices = self.mesh.inner_mesh_indices(inner)
         self.assertEqual(indices, (1, 10))
+        inner = Mesh1DUniform(3, 17, physical_step=1.0)
+        inner.crop = [0, 10]
+        indices = self.mesh.inner_mesh_indices(inner)
+        self.assertEqual(indices, (3, 7))
+        inner.crop = [0, 11]
+        indices = self.mesh.inner_mesh_indices(inner)
+        self.assertEqual(indices, (3, 6))
 
     def test_aligned(self):
         self.mesh = Mesh1DUniform(0, 10, physical_step=1.0)

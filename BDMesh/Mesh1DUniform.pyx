@@ -165,15 +165,57 @@ cdef class Mesh1DUniform(Mesh1D):
         self.__crop[0] = 0
         self.__crop[1] = 0
 
+    cpdef bint is_inside_of(self, Mesh1D mesh):
+        cdef:
+            double step = self.__calc_physical_step()
+            double mesh_crop_1 = 0, mesh_crop_2 = 0
+            double mesh_step = 0
+        if isinstance(mesh, Mesh1DUniform):
+            mesh_step = mesh.physical_step
+            mesh_crop_1 = mesh.crop[0] * mesh_step
+            mesh_crop_2 = mesh.crop[1] * mesh_step
+        if mesh.__physical_boundary_1 + mesh_crop_1 <= self.__physical_boundary_1 + self.__crop[0] * step:
+            if mesh.__physical_boundary_2 - mesh_crop_2 >= self.__physical_boundary_2 - self.__crop[1] * step:
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    cpdef bint overlap_with(self, Mesh1D mesh):
+        cdef:
+            double step = self.__calc_physical_step()
+            double mesh_crop_1 = 0, mesh_crop_2 = 0
+            double mesh_step = 0
+        if isinstance(mesh, Mesh1DUniform):
+            mesh_step = mesh.physical_step
+            mesh_crop_1 = mesh.crop[0] * mesh_step
+            mesh_crop_2 = mesh.crop[1] * mesh_step
+        if self.is_inside_of(mesh) or mesh.is_inside_of(self):
+            return True
+        elif mesh.__physical_boundary_1 + mesh_crop_1 <= self.__physical_boundary_1 + self.__crop[0] * step <= mesh.__physical_boundary_2 - mesh_crop_2:
+            return True
+        elif mesh.__physical_boundary_2 - mesh_crop_2 >= self.__physical_boundary_2 - self.__crop[0] * step >= mesh.__physical_boundary_1 + mesh_crop_1:
+            return True
+        else:
+            return False
+
     @boundscheck(False)
     @wraparound(False)
     cpdef inner_mesh_indices(self, Mesh1D mesh):
         cdef:
             int i, idx1 = -1, idx2 = -1
             double local_start, local_stop, local_step
+            double step = self.__calc_physical_step()
+            double mesh_crop_1 = 0, mesh_crop_2 = 0
+            double mesh_step = 0
+        if isinstance(mesh, Mesh1DUniform):
+            mesh_step = mesh.physical_step
+            mesh_crop_1 = mesh.crop[0] * mesh_step
+            mesh_crop_2 = mesh.crop[1] * mesh_step
         if mesh.is_inside_of(self):
-            local_start = (mesh.__physical_boundary_1 - self.__physical_boundary_1) / self.j()
-            local_stop = (mesh.__physical_boundary_2 - self.__physical_boundary_1) / self.j()
+            local_start = (mesh.__physical_boundary_1 + mesh_crop_1 - self.__physical_boundary_1) / self.j()
+            local_stop = (mesh.__physical_boundary_2 - mesh_crop_2 - self.__physical_boundary_1) / self.j()
             local_step = self.__calc_local_step() / 2
             for i in range(self.__local_nodes.shape[0]):
                 if fabs(self.__local_nodes[i] - local_start) <= local_step:
