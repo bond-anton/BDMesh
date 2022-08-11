@@ -133,7 +133,7 @@ setup(
     package_data={'BDMesh': ['Mesh1D.pxd', 'Mesh1DUniform.pxd',
                              'TreeMesh1D.pxd', 'TreeMesh1DUniform.pxd']},
 
-    tests_requre=['numpy'],
+    tests_require=['numpy'],
 
     cmdclass={'build_ext': CustomBuildExt},
 )
